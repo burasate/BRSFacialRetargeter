@@ -77,7 +77,7 @@ finally:
               '    imp.reload(FacialRetargeter.poseLib)\n' \
               '    imp.reload(FacialRetargeter.updater)\n' \
               'except:\n' \
-              '    import FacialRetargeter'
+              '    from BRSFacialRetargeter import FacialRetargeter'
 
     imagePath = projectDir + os.sep + 'BRSFacialRetargeter.png'
     cmds.shelfButton(stp='python', iol='', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=imagePath, c=command)
