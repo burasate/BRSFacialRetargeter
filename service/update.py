@@ -1,5 +1,5 @@
 """
-LOCATOR DELAY SYSTEM UPDATER
+BRS FACIAL RETARGETER UPDATER
 """
 from maya import cmds
 from maya import mel
@@ -12,22 +12,15 @@ def formatPath(path):
     path = path.replace("\\", os.sep)
     return path
 
-
 mayaAppDir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
 scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
-projectDir = formatPath(scriptsDir + os.sep + 'BRSLocDelay')
-presetsDir = formatPath(projectDir + os.sep + 'presets')
+projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
 userFile = formatPath(projectDir + os.sep + 'user')
-configFile = formatPath(projectDir + os.sep + 'config.json')
 
 # print ('mayaAppDir = ' + mayaAppDir)
 # print ('scriptsDir = ' + scriptsDir)
 # print ('projectDir = ' + projectDir)
 # print ('userSetupFile = ' + userFile)
-# mayaAppDir = C:\Users\TEST\Documents\maya
-# scriptsDir = C:\Users\TEST\Documents\maya\scripts
-# projectDir = C:\Users\TEST\Documents\maya\scripts\BRSLocDelay
-# userSetupFile = C:\Users\TEST\Documents\maya\scripts\BRSLocDelay\user
 
 # Update
 scriptUpdater = 'https://raw.githubusercontent.com/burasate/BRSLocDelay/master/BRSLocDelaySystem.py'

@@ -1,0 +1,282 @@
+"""
+BRS Facial Retargeter
+All rights reversed
+Create by Burased Uttha
+"""
+import maya.cmds as cmds
+import maya.mel as mel
+import json,os,sys,imp,time
+
+#rootPath = 'D:/GoogleDrive/Documents/2021/facialReTargeter/work'
+rootPath = os.path.dirname(os.path.abspath(__file__))
+srcPath = rootPath+'/src'
+configPath = rootPath+'/config.json'
+configJson = json.load(open(configPath))
+
+"""
+-----------------------------------------------------------------------
+Init
+-----------------------------------------------------------------------
+"""
+if not rootPath in sys.path:
+    sys.path.insert(0,rootPath)
+    print(rootPath)
+if not srcPath in sys.path:
+    sys.path.insert(0,srcPath)
+    print(srcPath)
+for dir in os.listdir(srcPath):
+    dirPath = srcPath + '/' + dir
+    if not '.' in dir and not dirPath in sys.path:
+        sys.path.insert(0, dirPath)
+        print(dirPath)
+
+import reTargeter
+import poseLib
+import updater
+imp.reload(reTargeter)
+imp.reload(poseLib)
+imp.reload(updater)
+
+"""
+-----------------------------------------------------------------------
+Func
+-----------------------------------------------------------------------
+"""
+def savePoseLib(*_):
+    imp.reload(poseLib)
+    result = cmds.fileDialog(mode=1,dm=rootPath + os.sep + 'poseLib' + os.sep + '*.json')
+    result = str(result)
+    if result != '':
+        print(result)
+        poseLib.savePoseLibrary(result)
+        cmds.textField(poseLibF, e=True, tx=result)
+        updateConfig()
+
+def createPoselib(*_):
+    retargetClear()
+    imp.reload(poseLib)
+    result = cmds.fileDialog(mode=1, dm=rootPath + os.sep + 'poseLib' + os.sep + '*.json')
+    result = str(result)
+    if result != '':
+        print(result)
+        poseLib.createPoseLibrary(result)
+        cmds.textField(poseLibF, e=True, tx=result)
+        updateConfig()
+
+def loadPoselib(*_):
+    retargetClear()
+    poseLibPath = cmds.textField(poseLibF, q=True, tx=True)
+    dstNs = cmds.textField(dstNsF, q=True, tx=True)
+
+    imp.reload(poseLib)
+    poseLib.loadPoseLibrary(poseLibPath,dstNs)
+
+def poseDataBrowser(*_):
+    result = cmds.fileDialog(dm=rootPath+os.sep+'poseData'+os.sep+'*.json')
+    result = str(result)
+    if result != '':
+        print(result)
+        cmds.textField(poseDataF, e=True, tx=result)
+        updateConfig()
+
+def poseLibraryBrowser(*_):
+    result = cmds.fileDialog(dm=rootPath+os.sep+'poseLib'+os.sep+'*.json')
+    result = str(result)
+    if result != '':
+        print(result)
+        cmds.textField(poseLibF, e=True, tx=result)
+        updateConfig()
+
+def SetIdCurrentFrame(*_):
+    text = cmds.textScrollList(poseSL,q=True,selectItem=True)[0]
+    poseDataJson = json.load(
+        open(cmds.textField(poseDataF, q=True, tx=True)))
+
+    for data in poseDataJson:
+        if text.__contains__(data['id']):
+            f = float(data['id'])
+            cmds.currentTime(f)
+
+
+def getDstNamespaceSelect(*_):
+    selection = cmds.ls(sl=True)
+    ns = (selection[0].split(':'))[0]
+    cmds.textField(dstNsF, e=True, tx=ns)
+    updateConfig()
+
+def getSrcBlendshapeSelect(*_):
+    selection = cmds.ls(sl=True)
+    if len(selection) == 0:
+        cmds.warning('Please Select Object with Blenshape')
+        return None
+    bs = cmds.ls(cmds.listHistory(selection[0]) or [], type='blendShape')
+    if len(bs) > 0 :
+        cmds.textField(srcBsF, e=True, tx=bs[0])
+        kfList = cmds.keyframe(bs[0], tc=True, q=True)
+        #cmds.intField(timeMaxF,e=True, v=round(max(kfList),0))
+        #cmds.intField(timeMinF,e=True, v=round(min(kfList),0))
+        updateConfig()
+
+def updateUI(*_):
+    cmds.textField(srcBsF, e=True, tx=configJson['src_blendshape'] )
+    cmds.textField(dstNsF, e=True, tx=configJson['dst_namespace'] )
+    cmds.textField(poseDataF, e=True, tx=configJson['pose_data_path'] )
+    cmds.textField(poseLibF, e=True, tx=configJson['pose_library_path'] )
+
+    try:
+        poseDataJson = json.load(open(cmds.textField(poseDataF, q=True, tx=True)))
+    except:
+        pass
+    else:
+        for data in poseDataJson:
+            name = data['name']
+            maxSpace = 15
+            if len(name) < maxSpace:
+                name = name + ' '*(maxSpace - len(name))
+            if len(name) > maxSpace:
+                name = name[:maxSpace]
+            text = '[ {} ] {} [ {} ]'.format(data['id'],name,data['type'])
+            cmds.textScrollList(poseSL,e=True,append=[text])
+
+def updateConfig(*_):
+    global configPath
+    global configJson
+
+    configJson['time'] = time.time()
+    configJson['src_blendshape'] = cmds.textField(srcBsF, q=True, tx=True)
+    configJson['dst_namespace'] = cmds.textField(dstNsF, q=True, tx=True)
+    configJson['pose_data_path'] = cmds.textField(poseDataF, q=True, tx=True)
+    configJson['pose_library_path'] = cmds.textField(poseLibF, q=True, tx=True)
+
+    if configJson != json.load(open(configPath)) :
+        outFile = open(configPath, 'wb')
+        json.dump(configJson, outFile, sort_keys=True, indent=4)
+        #configJson = json.load(open(configPath))
+        print('config updated')
+
+def setCorrectPose(*_):
+    imp.reload(reTargeter)
+    global configJson
+    configJson = json.load(open(configPath))
+
+    reTargeter.updatePoseLibSelection()
+
+def doRetarget(*_):
+    imp.reload(reTargeter)
+    global configJson
+    configJson = json.load(open(configPath))
+
+    try:
+        cmds.refresh(suspend=True)
+        reTargeter.RetargetLink()
+    except IOError as e:
+        print(e.errno)
+        print(e)
+    finally:
+        cmds.refresh(suspend=False)
+
+def retargetClear(*_):
+    imp.reload(reTargeter)
+    reTargeter.clearLink()
+
+def doBakeRetarget(*_):
+    imp.reload(reTargeter)
+    reTargeter.bakeRetarget()
+
+def setSmooth(*_):
+    imp.reload(reTargeter)
+    reTargeter.addSmoothSelection()
+
+def unsetSmooth(*_):
+    imp.reload(reTargeter)
+    reTargeter.removeSmoothSelection()
+
+"""
+-----------------------------------------------------------------------
+UI
+-----------------------------------------------------------------------
+"""
+version = 'Alpha 0.03'
+winID = 'BRSFACERETARGET'
+winWidth = 300
+
+colorSet = {
+    'bg': (.2, .2, .2),
+    'red': (0.8, 0.4, 0),
+    'green': (0.7067,1,0),
+    'blue': (0, 0.4, 0.8),
+    'yellow': (1, 0.8, 0),
+    'shadow': (.15, .15, .15),
+    'highlight': (.3, .3, .3)
+}
+
+if cmds.window(winID, exists=True):
+    cmds.deleteUI(winID)
+cmds.window(winID, t='BRS Facial Retargeter' + ' - ' + version,
+            w=winWidth, sizeable=True,
+            retain=True, bgc=colorSet['bg'])
+cmds.window(winID,e=True,w=10,h=10,sizeable=False)
+
+cmds.columnLayout(adj=False, w=winWidth)
+cmds.text(l='BRS Facial Retargeter' + ' - ' + version, fn='boldLabelFont', h=20, w=winWidth, bgc=colorSet['yellow'])
+
+cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .2, winWidth * .7, winWidth * .1),adj=2)
+cmds.text(l=' Data :',al='right')
+poseDataF = cmds.textField(w=winWidth*.7,ed=False)
+cmds.button(l='...',w=winWidth * .08,c=poseDataBrowser)
+cmds.setParent('..')
+
+cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .2, winWidth * .7, winWidth * .1),adj=2)
+cmds.text(l=' Library :',al='right')
+poseLibF = cmds.textField(w=winWidth*.7,ed=False)
+cmds.button(l='...',w=winWidth * .08,c=poseLibraryBrowser)
+cmds.setParent('..')
+
+cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .3, winWidth * .6, winWidth * .1),adj=2)
+cmds.text(l=' Src Blendshape :',al='right')
+srcBsF = cmds.textField(w=winWidth*.6)
+cmds.button(l='>',w=winWidth * .08,c=getSrcBlendshapeSelect)
+cmds.setParent('..')
+
+cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .3, winWidth * .6, winWidth * .1),adj=2)
+cmds.text(l=' Dst Namespace :',al='right')
+dstNsF = cmds.textField(w=winWidth*.6)
+cmds.button(l='>',w=winWidth * .08,c=getDstNamespaceSelect)
+cmds.setParent('..')
+
+cmds.text(l='   Pose Library', fn='boldLabelFont', al='left', h=30, w=winWidth)
+#cmds.text(l='work in progress', fn='smallPlainLabelFont', al='left', h=20, w=winWidth)
+
+poseSL = cmds.textScrollList(w=winWidth, numberOfRows=4, allowMultiSelection=False,
+			append=[],removeAll=True,font='fixedWidthFont',dcc=SetIdCurrentFrame)
+
+#cmds.text(l='from selection', fn='smallPlainLabelFont', al='left', h=20, w=winWidth)
+cmds.rowLayout(numberOfColumns=3, columnWidth3=[(winWidth/3)-1.33*3,(winWidth/3)-1.33*3,(winWidth/3)-1.33*3])
+cmds.button(l='Create',w=(winWidth/3)-1.33,bgc=colorSet['shadow'], c=createPoselib)
+cmds.button(l='Load',w=(winWidth/3)-1.33,bgc=colorSet['shadow'], c=loadPoselib)
+cmds.button(l='Save',w=(winWidth/3)-1.33,bgc=colorSet['shadow'],c=savePoseLib)
+cmds.setParent('..')
+
+#cmds.text(l='   UE Live Link', fn='boldLabelFont', al='left', h=30, w=winWidth)
+#cmds.text(l='work in progress', fn='smallPlainLabelFont', al='left', h=20, w=winWidth)
+
+cmds.text(l='   Retarget Link', fn='boldLabelFont', al='left', h=30, w=winWidth)
+
+cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
+cmds.button(l='Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=doRetarget)
+cmds.button(l='Delete',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=retargetClear)
+cmds.setParent('..')
+cmds.button(l='Correct Pose Selection',w=winWidth-1,bgc=colorSet['shadow'],c=setCorrectPose)
+
+cmds.text(l='   Smooth Selection', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
+cmds.button(l='Add',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=setSmooth)
+cmds.button(l='Remove',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=unsetSmooth)
+cmds.setParent('..')
+
+cmds.text(l='   Bake Retarget Animation', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.button(l='Bake Animation',w=winWidth-1,bgc=colorSet['shadow'],c=doBakeRetarget)
+
+cmds.text(l='Created by Burasate Uttha', h=20, al='left', fn='smallPlainLabelFont')
+cmds.showWindow(winID)
+updateUI()
