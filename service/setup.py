@@ -37,7 +37,7 @@ except:
     while True:
         user = cmds.promptDialog(
             title='BRS',
-            message='BRS Register\nConfirm Your Email',
+            message='BRS Register - Please Confirm Your Email',
             button=['Confirm'],
             defaultButton='Confirm',
             cancelButton='Cancel',
@@ -76,6 +76,7 @@ finally:
               '    imp.reload(FacialRetargeter.reTargeter)\n' \
               '    imp.reload(FacialRetargeter.poseLib)\n' \
               '    imp.reload(FacialRetargeter.updater)\n' \
+              '    FacialRetargeter.showUI()\n' \
               'except:\n' \
               '    from BRSFacialRetargeter import FacialRetargeter\n' \
               '    FacialRetargeter.showUI()'
