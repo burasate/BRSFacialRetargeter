@@ -81,7 +81,7 @@ finally:
               '    FacialRetargeter.showUI()'
 
     imagePath = projectDir + os.sep + 'BRSFacialRetargeter.png'
-    cmds.shelfButton(stp='python', iol='', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=imagePath, c=command)
+    cmds.shelfButton(stp='python', iol='FR', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=imagePath, c=command)
 
     # Finish
     cmds.confirmDialog(title='BRS FACIAL RETARGETER', message='Installation Successful.', button=['OK'])
