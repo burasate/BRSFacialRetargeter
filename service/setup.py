@@ -72,12 +72,12 @@ finally:
     currentShelf = cmds.tabLayout(topShelf, q=1, st=1)
     command = 'import imp\n' \
               'try:\n' \
-              ' imp.reload(FacialRetargeter)\n' \
-              ' imp.reload(FacialRetargeter.reTargeter)\n' \
-              ' imp.reload(FacialRetargeter.poseLib)' \
-              ' imp.reload(FacialRetargeter.updater)' \
+              '    imp.reload(FacialRetargeter)\n' \
+              '    imp.reload(FacialRetargeter.reTargeter)\n' \
+              '    imp.reload(FacialRetargeter.poseLib)' \
+              '    imp.reload(FacialRetargeter.updater)' \
               'except:\n' \
-              ' import FacialRetargeter'
+              '    import FacialRetargeter'
 
     imagePath = projectDir + os.sep + 'BRSFacialRetargeter.png'
     cmds.shelfButton(stp='python', iol='', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=imagePath, c=command)

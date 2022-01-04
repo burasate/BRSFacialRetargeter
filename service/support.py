@@ -1,7 +1,7 @@
 """
 ---------------------
-LocatorDelaySystem
-Support Service V1.1X
+BRS FACIAL RETARGETER
+SUPPORTING SCRIPT
 ---------------------
 """
 
@@ -11,6 +11,7 @@ import datetime as dt
 from maya import mel
 import maya.cmds as cmds
 
+"""
 def formatPath(path):
     import os
     path = path.replace("/", os.sep)
@@ -66,12 +67,22 @@ params = urllib.urlencode(data)
 conn = urllib.urlopen('{}?{}'.format(url, params))
 print(conn.read())
 #print(conn.info())
-
+"""
 
 # Supporter Coding
-# Force Update for 1 month since 1 oct 2020
+print('Supporter is working now')
+"""
 try:
     updateSource = 'source "'+projectDir.replace('\\','/') + '/BRS_DragNDrop_Update.mel' + '";'
     mel.eval(updateSource)
 except:
     pass
+    
+# .pyc Removal
+pycList = [projectDir + os.sep + 'BRSLocDelaySystem.pyc', projectDir + os.sep + '__init__.pyc']
+for pycF in pycList:
+    try:
+        os.remove(pycF)
+    except:
+        pass
+"""
