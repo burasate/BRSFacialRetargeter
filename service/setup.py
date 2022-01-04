@@ -36,8 +36,8 @@ except:
     # Email Register
     while True:
         user = cmds.promptDialog(
-            title='BRS Loc Delay Register',
-            message='BRS Loc Delay Register\nConfirm Your Email',
+            title='BRS',
+            message='BRS Register\nConfirm Your Email',
             button=['Confirm'],
             defaultButton='Confirm',
             cancelButton='Cancel',
@@ -74,8 +74,8 @@ finally:
               'try:\n' \
               '    imp.reload(FacialRetargeter)\n' \
               '    imp.reload(FacialRetargeter.reTargeter)\n' \
-              '    imp.reload(FacialRetargeter.poseLib)' \
-              '    imp.reload(FacialRetargeter.updater)' \
+              '    imp.reload(FacialRetargeter.poseLib)\n' \
+              '    imp.reload(FacialRetargeter.updater)\n' \
               'except:\n' \
               '    import FacialRetargeter'
 
