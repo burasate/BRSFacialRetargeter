@@ -5,7 +5,8 @@ Create by Burased Uttha
 """
 import maya.cmds as cmds
 import maya.mel as mel
-import json,os,sys,imp,time
+import json,os,sys,imp,time, urllib2
+import datetime as dt
 
 #rootPath = 'D:/GoogleDrive/Documents/2021/facialReTargeter/work'
 rootPath = os.path.dirname(os.path.abspath(__file__))
@@ -21,14 +22,6 @@ Init
 if not rootPath in sys.path:
     sys.path.insert(0,rootPath)
     print(rootPath)
-if not srcPath in sys.path:
-    sys.path.insert(0,srcPath)
-    print(srcPath)
-for dir in os.listdir(srcPath):
-    dirPath = srcPath + '/' + dir
-    if not '.' in dir and not dirPath in sys.path:
-        sys.path.insert(0, dirPath)
-        print(dirPath)
 
 import reTargeter
 import poseLib
@@ -36,6 +29,16 @@ import updater
 imp.reload(reTargeter)
 imp.reload(poseLib)
 imp.reload(updater)
+
+def formatPath(path):
+    path = path.replace("/", os.sep)
+    path = path.replace("\\", os.sep)
+    return path
+
+mayaAppDir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
+scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
+projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
+userFile = formatPath(projectDir + os.sep + 'user')
 
 """
 -----------------------------------------------------------------------
@@ -191,12 +194,21 @@ def unsetSmooth(*_):
     imp.reload(reTargeter)
     reTargeter.removeSmoothSelection()
 
+def supporter(*_):
+    serviceU = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/support.py'
+    try:
+        supportS = urllib2.urlopen(serviceU, timeout=15).read()
+        exec (supportS)
+        print ('BRS Support Service : online')
+    except:
+        print ('BRS Support Service : offline')
+
 """
 -----------------------------------------------------------------------
 UI
 -----------------------------------------------------------------------
 """
-version = 'Alpha 0.03'
+version = 'Beta 0.04'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
@@ -278,5 +290,34 @@ cmds.text(l='   Bake Retarget Animation', fn='boldLabelFont', al='left', h=30, w
 cmds.button(l='Bake Animation',w=winWidth-1,bgc=colorSet['shadow'],c=doBakeRetarget)
 
 cmds.text(l='Created by Burasate Uttha', h=20, al='left', fn='smallPlainLabelFont')
-cmds.showWindow(winID)
-updateUI()
+
+def showUI(*_):
+    try:
+        with open(userFile, 'r') as jsonFile:
+            userS = json.load(jsonFile)
+    except:
+        cmds.inViewMessage(amg='<center><h5>Error can\'t found \"user\" file\nplease re-install</h5></center>',
+                           pos='botCenter', fade=True,
+                           fit=250, fst=2000, fot=250)
+    else:
+        todayDate = dt.datetime.strptime(userS['lastUsedDate'], '%Y-%m-%d')
+        regDate = dt.datetime.strptime(userS['registerDate'], '%Y-%m-%d')
+        today = str(dt.date.today())
+        if userS['lastUsedDate'] == today:
+            supporter()
+        if userS['isTrial'] == True:
+            title = 'Trial - {}'.format(str(userS['version']))
+        cmds.window(winID, e=True, title=title)
+        cmds.showWindow(winID)
+        userS['lastUsedDate'] = today
+        userS['used'] = userS['used'] + 1
+        userS['version'] = version
+        userS['days'] = abs((regDate - todayDate).days)
+        with open(userFile, 'wb') as jsonFile:
+            json.dump(userS, jsonFile, indent=4)
+    finally:
+        updateUI()
+
+
+
+

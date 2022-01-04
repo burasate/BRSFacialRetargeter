@@ -11,7 +11,7 @@ import datetime as dt
 from maya import mel
 import maya.cmds as cmds
 
-"""
+
 def formatPath(path):
     import os
     path = path.replace("/", os.sep)
@@ -20,11 +20,10 @@ def formatPath(path):
 
 mayaAppDir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
 scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
-projectDir = formatPath(scriptsDir + os.sep + 'BRSLocDelay')
-presetsDir = formatPath(projectDir + os.sep + 'presets')
+projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
 userFile = formatPath(projectDir + os.sep + 'user')
-configFile = formatPath(projectDir + os.sep + 'config.json')
 
+"""
 filepath = cmds.file(q=True, sn=True)
 filename = os.path.basename(filepath)
 raw_name, extension = os.path.splitext(filename)
@@ -79,9 +78,10 @@ except:
     pass
 """
 # .pyc Removal
-pycList = [projectDir + os.sep + 'BRSLocDelaySystem.pyc', projectDir + os.sep + '__init__.pyc']
+pycList = os.listdir(projectDir)
 for pycF in pycList:
-    try:
-        os.remove(pycF)
-    except:
-        pass
+    if '.pyc' in pycF:
+        try:
+            os.remove(projectDir + os.sep + pycF)
+        except:
+            pass

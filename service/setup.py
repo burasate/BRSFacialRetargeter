@@ -6,7 +6,6 @@ from maya import mel
 import os, json, getpass
 import datetime as dt
 
-
 def formatPath(path):
     path = path.replace("/", os.sep)
     path = path.replace("\\", os.sep)
