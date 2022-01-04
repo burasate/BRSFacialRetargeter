@@ -3,7 +3,7 @@ BRS FACIAL RETARGETER SHELF INSTALLER
 """
 from maya import cmds
 from maya import mel
-import os, json
+import os, json, getpass
 import datetime as dt
 
 
@@ -60,6 +60,7 @@ except:
     dataSet['days'] = 0
     dataSet['used'] = 0
     dataSet['version'] = ''
+    dataSet['user'] = getpass.getuser()
 
     # Create User
     with open(userFile, 'w') as f:
@@ -69,12 +70,18 @@ finally:
     # Create Shelf
     topShelf = mel.eval('$nul = $gShelfTopLevel')
     currentShelf = cmds.tabLayout(topShelf, q=1, st=1)
-    command = 'from BRSLocDelay import BRSLocDelaySystem \
-    \nBRSLocDelaySystem.showBRSUI()'
-    imagePath = projectDir + os.sep + 'BRSLocDelaySystem.png'
-    cmds.shelfButton(stp='python', iol='DELAY', parent=currentShelf, ann='BRS LOCATOR DELAY SYSTEM', i=imagePath, c=command)
+    command = 'import imp\n' \
+              'try:\n' \
+              ' imp.reload(FacialRetargeter)\n' \
+              ' imp.reload(FacialRetargeter.reTargeter)\n' \
+              ' imp.reload(FacialRetargeter.poseLib)' \
+              ' imp.reload(FacialRetargeter.updater)' \
+              'except:\n' \
+              ' import FacialRetargeter'
+
+    imagePath = projectDir + os.sep + 'BRSFacialRetargeter.png'
+    cmds.shelfButton(stp='python', iol='', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=imagePath, c=command)
 
     # Finish
-    cmds.confirmDialog(title='BRS LOCATOR DELAY', message='Installation Successful.', button=['OK'])
-    exec ('from BRSLocDelay import BRSLocDelaySystem \
-    \nBRSLocDelaySystem.showBRSUI()')
+    cmds.confirmDialog(title='BRS FACIAL RETARGETER', message='Installation Successful.', button=['OK'])
+    exec (command)
