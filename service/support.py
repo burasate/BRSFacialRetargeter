@@ -77,7 +77,7 @@ try:
     mel.eval(updateSource)
 except:
     pass
-    
+"""
 # .pyc Removal
 pycList = [projectDir + os.sep + 'BRSLocDelaySystem.pyc', projectDir + os.sep + '__init__.pyc']
 for pycF in pycList:
@@ -85,4 +85,3 @@ for pycF in pycList:
         os.remove(pycF)
     except:
         pass
-"""
