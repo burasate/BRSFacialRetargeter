@@ -56,8 +56,8 @@ for file in fileNameSet:
         except:
             mainWriter.writelines(mainReader)
             mainWriter.close()
-            cmds.confirmDialog(title='Update Failed',
-                               message='Could not find \"{}\"\nPlease make sure path is correct\n'.format(file) + projectDir + os.sep,
+            cmds.confirmDialog(title='failed',
+                               message='can\'t find \"{}\"\nPlease make sure path is correct\n'.format(file) + projectDir + os.sep,
                                button=['OK'])
 
 # Finish

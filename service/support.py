@@ -28,13 +28,13 @@ userFile = formatPath(projectDir + os.sep + 'user')
 
 # Supporter Coding
 print('Supporter is working now')
-"""
+
 try:
     updateSource = 'source "'+projectDir.replace('\\','/') + '/BRS_DragNDrop_Update.mel' + '";'
     mel.eval(updateSource)
 except:
     pass
-"""
+
 # .pyc Removal
 pycList = os.listdir(projectDir)
 for pycF in pycList:
