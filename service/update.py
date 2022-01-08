@@ -26,7 +26,7 @@ updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/
 updateFilePath = urllib2.urlopen(updateListURL, timeout=60).read()
 fileNameSet = json.loads(updateFilePath)
 
-
+gMainProgressBar = mel.eval('$tmp = $gMainProgressBar')
 cmds.progressBar(gMainProgressBar,
                      edit=True,
                      beginProgress=True,
