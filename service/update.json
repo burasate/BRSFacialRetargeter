@@ -1,6 +1,6 @@
 {
-  "FacialRetargeter.py" : "https://raw.githubusercontent.com/burasate/BitPy/master/historical.py",
-  "poseLib.py" : "https://raw.githubusercontent.com/burasate/BitPy/master/kbApi.py",
-  "reTargeter.py" : "https://raw.githubusercontent.com/burasate/BitPy/master/lineNotify.py",
-  "updater.py" : "https://raw.githubusercontent.com/burasate/BitPy/master/update.py"
+  "FacialRetargeter.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/FacialRetargeter.py",
+  "poseLib.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/poseLib.py",
+  "reTargeter.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/reTargeter.py",
+  "updater.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/updater.py"
 }
