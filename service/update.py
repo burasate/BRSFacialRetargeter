@@ -23,8 +23,8 @@ userFile = formatPath(projectDir + os.sep + 'user')
 
 # Update
 updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/update.json'
-for file in fileNameSet:
-    url = fileNameSet[file]
+for file in updateListURL:
+    url = updateListURL[file]
     urlReader = ''
     mainReader = ''
     try:
@@ -48,7 +48,7 @@ for file in fileNameSet:
             cmds.confirmDialog(title='Update Failed',
                                message='Could not find \"FacialRetargeter.py\"\nPlease make sure path is correct\n' + projectDir + os.sep,
                                button=['OK'])
-            
+
 # Finish
 cmds.inViewMessage(amg='BRS FACIAL RETARGETER : Update <hl>Successful</hl>', pos='botCenter', fade=True,
                    fit=250, fst=2000, fot=250)
