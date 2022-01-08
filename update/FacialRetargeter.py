@@ -208,7 +208,7 @@ def supporter(*_):
 UI
 -----------------------------------------------------------------------
 """
-version = 'Beta 0.04'
+version = '0.04B'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
