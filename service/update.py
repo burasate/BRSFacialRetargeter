@@ -52,7 +52,7 @@ for file in fileNameSet:
             urlReader = urllib2.urlopen(url, timeout=60).readlines()
             mainWriter.writelines(urlReader)
             mainWriter.close()
-            print('{} was loaded'.format(file.replace('.py', '').capitalize()))
+            #print('{} was loaded'.format(file.replace('.py', '').capitalize()))
         except:
             mainWriter.writelines(mainReader)
             mainWriter.close()
@@ -62,5 +62,3 @@ for file in fileNameSet:
 
 # Finish
 cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
-cmds.inViewMessage(amg='BRS FACIAL RETARGETER : Update <hl>Successful</hl>', pos='botCenter', fade=True,
-                   fit=250, fst=2000, fot=250)
