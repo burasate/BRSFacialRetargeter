@@ -21,36 +21,34 @@ userFile = formatPath(projectDir + os.sep + 'user')
 # print ('projectDir = ' + projectDir)
 # print ('userSetupFile = ' + userFile)
 
-"""
 # Update
-scriptUpdater = 'https://raw.py'
-urlReader = ''
-mainReader = ''
-try:
-    mainReader = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'r').readlines()
-except:
-    cmds.confirmDialog(title='Update Failed',
-                       message='Could not find \"FacialRetargeter.py\"\nPlease make sure path is correct\n' + projectDir + os.sep,
-                       button=['OK'])
-else:
-    mainReader = open(projectDir + os.sep + 'FacialRetargeter.py', 'r').readlines()
-    mainWriter = open(projectDir + os.sep + 'FacialRetargeter.py', 'w')
+updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/update.json'
+for file in fileNameSet:
+    url = fileNameSet[file]
+    urlReader = ''
+    mainReader = ''
     try:
-        urlReader = urllib2.urlopen(scriptUpdater, timeout=60).readlines()
-        mainWriter.writelines(urlReader)
-        mainWriter.close()
-        print('Update Successful')
-        # cmds.confirmDialog(title='BRS FACIAL RETARGETER', message='Update Successful', button=['OK'])
+        mainReader = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'r').readlines()
     except:
-        mainWriter.writelines(mainReader)
-        mainWriter.close()
-        print('Update Failed')
         cmds.confirmDialog(title='Update Failed',
-                           message='Could not find \"FacialRetargeter.py\"\nPlease make sure path is correct\n' + projectDir + os.sep,
+                           message='can\'t find \"{}\"\nPlease make sure path is correct\n'.format(file) + projectDir + os.sep,
                            button=['OK'])
-
-"""
-
+    else:
+        mainReader = open(projectDir + os.sep + file, 'r').readlines()
+        mainWriter = open(projectDir + os.sep + file, 'w')
+        try:
+            urlReader = urllib2.urlopen(url, timeout=60).readlines()
+            mainWriter.writelines(urlReader)
+            mainWriter.close()
+            print('Update Successful')
+        except:
+            mainWriter.writelines(mainReader)
+            mainWriter.close()
+            print('Update Failed')
+            cmds.confirmDialog(title='Update Failed',
+                               message='Could not find \"FacialRetargeter.py\"\nPlease make sure path is correct\n' + projectDir + os.sep,
+                               button=['OK'])
+            
 # Finish
 cmds.inViewMessage(amg='BRS FACIAL RETARGETER : Update <hl>Successful</hl>', pos='botCenter', fade=True,
                    fit=250, fst=2000, fot=250)
