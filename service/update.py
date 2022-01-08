@@ -27,6 +27,7 @@ updateFilePath = urllib2.urlopen(updateListURL, timeout=60).read()
 fileNameSet = json.loads(updateFilePath)
 
 for file in fileNameSet:
+
     url = updateListURL[file]
     urlReader = ''
     mainReader = ''
@@ -43,13 +44,12 @@ for file in fileNameSet:
             urlReader = urllib2.urlopen(url, timeout=60).readlines()
             mainWriter.writelines(urlReader)
             mainWriter.close()
-            print('Update Successful')
+            print('{} was loaded'.format(file.replace('.py', '').capitalize()))
         except:
             mainWriter.writelines(mainReader)
             mainWriter.close()
-            print('Update Failed')
             cmds.confirmDialog(title='Update Failed',
-                               message='Could not find \"FacialRetargeter.py\"\nPlease make sure path is correct\n' + projectDir + os.sep,
+                               message='Could not find \"{}\"\nPlease make sure path is correct\n'.format(file) + projectDir + os.sep,
                                button=['OK'])
 
 # Finish
