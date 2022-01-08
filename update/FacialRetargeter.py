@@ -306,7 +306,7 @@ def showUI(*_):
         if userS['lastUsedDate'] == today:
             supporter()
         if userS['isTrial'] == True:
-            title = 'Trial - {}'.format(str(userS['version']))
+            title = 'TRIAL - {}'.format(str(userS['version']))
         cmds.window(winID, e=True, title=title)
         cmds.showWindow(winID)
         userS['lastUsedDate'] = today
@@ -318,6 +318,8 @@ def showUI(*_):
     finally:
         updateUI()
 
-
+"""
+Create by Burased Uttha
+"""
 
 
