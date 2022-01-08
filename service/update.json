@@ -3,5 +3,5 @@
   "poseLib.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/poseLib.py",
   "reTargeter.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/reTargeter.py",
   "updater.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/updater.py",
-  "__init__.py.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/__init__.py.py"
+  "__init__.py" : "https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/update/__init__.py"
 }
