@@ -92,7 +92,7 @@ def getSrcBsData(srcBlendshape,frameList):
                 srcBsData[bsId]['frame'].append(f)
                 srcBsData[bsId]['value'].append(expValue)
         else:continue
-    cmds.progressBar(gMainProgressBar, edit=True, endProgress=True, status='Reading Data..')
+    cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
     return srcBsData
 
 def getResultData(dstNamespace,srcBsData,frame,baseId='001'):
