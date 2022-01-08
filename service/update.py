@@ -26,7 +26,16 @@ updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/
 updateFilePath = urllib2.urlopen(updateListURL, timeout=60).read()
 fileNameSet = json.loads(updateFilePath)
 
+
+cmds.progressBar(gMainProgressBar,
+                     edit=True,
+                     beginProgress=True,
+                     isInterruptable=False,
+                     maxValue=len(fileNameSet) + 1)
 for file in fileNameSet:
+    cmds.progressBar(gMainProgressBar, edit=True, step=1,
+                     status='initialize.. {}'.format(file.replace('.py', '')) )
+
     url = fileNameSet[file]
     urlReader = ''
     mainReader = ''
@@ -52,5 +61,6 @@ for file in fileNameSet:
                                button=['OK'])
 
 # Finish
+cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
 cmds.inViewMessage(amg='BRS FACIAL RETARGETER : Update <hl>Successful</hl>', pos='botCenter', fade=True,
                    fit=250, fst=2000, fot=250)
