@@ -31,7 +31,7 @@ for file in fileNameSet:
     urlReader = ''
     mainReader = ''
     try:
-        mainReader = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'r').readlines()
+        mainReader = open(projectDir + os.sep + file, 'r').readlines()
     except:
         cmds.confirmDialog(title='Update Failed',
                            message='can\'t find \"{}\"\nPlease make sure path is correct\n'.format(file) + projectDir + os.sep,
