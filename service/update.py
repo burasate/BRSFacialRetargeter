@@ -23,7 +23,10 @@ userFile = formatPath(projectDir + os.sep + 'user')
 
 # Update
 updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/update.json'
-for file in updateListURL:
+updateFilePath = urllib2.urlopen(updateListURL, timeout=60).readlines()
+fileNameSet = json.loads(updateFilePath)
+
+for file in fileNameSet:
     url = updateListURL[file]
     urlReader = ''
     mainReader = ''
