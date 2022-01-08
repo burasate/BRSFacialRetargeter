@@ -27,8 +27,7 @@ updateFilePath = urllib2.urlopen(updateListURL, timeout=60).read()
 fileNameSet = json.loads(updateFilePath)
 
 for file in fileNameSet:
-
-    url = updateListURL[file]
+    url = fileNameSet[file]
     urlReader = ''
     mainReader = ''
     try:
