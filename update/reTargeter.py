@@ -299,15 +299,28 @@ def clearLink(*_):
                 pass
 
 def createConfigGrp(*_):
+    smoothSetsName = brsPrefix + 'smoothSets'
+    if not cmds.objExists(smoothSetsName):
+        cmds.sets(n=smoothSetsName, empty=True)
+
     cmds.group(em=True, name=frConfig)
     frExp = brsPrefix + 'updater'
     for attr in cmds.listAttr(frConfig, k=True):  # Clear Transform Attribute
         cmds.setAttr('{}.{}'.format(frConfig, attr), e=True, keyable=False, channelBox=False)
-    for at in configJson['rtg_attr']:
+    for at in configJson['rtg_attr']: #Config Attribute
         cmds.addAttr(frConfig, ln=at['name'], at=at['at'], keyable=at['keyable'], min=at['min'], max=at['max'])
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), at['value'], e=True, channelBox=True)
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, keyable=at['keyable'])
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, lock=at['lock'])
+    for dataP in poseDataJson: #Expression Attribute
+        if dataP['type'] == 'expression':
+            cmds.addAttr(frConfig, ln=dataP['name'], at='float', keyable=True, min=0.0, max=1.0)
+            cmds.setAttr('{}.{}'.format(frConfig, dataP['name']), 0.0, e=True, channelBox=True)
+            cmds.setAttr('{}.{}'.format(frConfig, dataP['name']), e=True, keyable=True)
+            cmds.setAttr('{}.{}'.format(frConfig, dataP['name']), e=True, lock=False)
+        else:
+            continue
+
     cmds.expression(name=frExp,
                     s=
                     'if (brsFR_config.active == 1 && brsFR_config.deferred == 0)\n' + \
@@ -315,10 +328,6 @@ def createConfigGrp(*_):
                     'else if (brsFR_config.active == 1 && brsFR_config.deferred == 1)' + \
                     '{\npython( \"cmds.evalDeferred(\'FacialRetargeter.updater.setRetargetAttribute()\')\" );\n}\n'
                     )
-
-    smoothSetsName = brsPrefix + 'smoothSets'
-    if not cmds.objExists(smoothSetsName):
-        cmds.sets(n=smoothSetsName, empty=True)
 
 
 def RetargetLink(forceConnect=False,update=False):
