@@ -11,6 +11,10 @@ rootPath = os.path.dirname(os.path.abspath(__file__))
 configPath = rootPath+'/config.json'
 configJson = json.load(open(configPath))
 
+import imp
+import poseData
+imp.reload(poseData)
+
 def getSelection(*_):
     selection = cmds.ls(sl=True)
     objectList = []
@@ -37,7 +41,8 @@ def getSelection(*_):
     }
 
 def savePoseLibrary(filePath):
-    poseDataJson = json.load(open(configJson['pose_data_path']))
+    #poseDataJson = json.load(open(configJson['pose_data_path']))
+    poseDataJson = poseData.getPoseData()
     selectData = getSelection()
 
     data = {
@@ -118,7 +123,8 @@ def loadPoseLibrary(filePath,dstNs):
 
 
 def createPoseLibrary(filePath):
-    poseDataJson = json.load(open(configJson['pose_data_path']))
+    #poseDataJson = json.load(open(configJson['pose_data_path']))
+    poseDataJson = poseData.getPoseData()
     selectData = getSelection()
 
     cmds.cutKey(selectData['selection'])

@@ -13,7 +13,9 @@ frConfig = brsPrefix + 'config'
 
 import imp
 import updater
+import poseData
 imp.reload(updater)
+imp.reload(poseData)
 
 def reloadConfig(*_):
     global configJson
@@ -55,7 +57,8 @@ def getFrameValue(nameSpace,frame):
     return data
 
 def getSrcBsData(srcBlendshape,frameList):
-    poseDataJson = json.load(open(configJson['pose_data_path']))
+    # poseDataJson = json.load(open(configJson['pose_data_path']))
+    poseDataJson = poseData.getPoseData()
     gMainProgressBar = mel.eval('$tmp = $gMainProgressBar');
     cmds.progressBar( gMainProgressBar,
     				edit=True,
@@ -299,6 +302,8 @@ def clearLink(*_):
                 pass
 
 def createConfigGrp(*_):
+    # poseDataJson = json.load(open(configJson['pose_data_path']))
+    poseDataJson = poseData.getPoseData()
     smoothSetsName = brsPrefix + 'smoothSets'
     if not cmds.objExists(smoothSetsName):
         cmds.sets(n=smoothSetsName, empty=True)
@@ -331,7 +336,8 @@ def createConfigGrp(*_):
 
 
 def RetargetLink(forceConnect=False,update=False):
-    poseDataJson = json.load(open(configJson['pose_data_path']))
+    # poseDataJson = json.load(open(configJson['pose_data_path']))
+    poseDataJson = poseData.getPoseData()
     poseLibJson = json.load(open(configJson['pose_library_path']))
     srcBs = configJson['src_blendshape']
     dstNs = configJson['dst_namespace']
@@ -445,7 +451,8 @@ def RetargetLink(forceConnect=False,update=False):
     cmds.select(cl=True)
 
 def bakeRetarget(*_):
-    poseDataJson = json.load(open(configJson['pose_data_path']))
+    # poseDataJson = json.load(open(configJson['pose_data_path']))
+    poseDataJson = poseData.getPoseData()
     poseLibJson = json.load(open(configJson['pose_library_path']))
     srcBs = configJson['src_blendshape']
     dstNs = configJson['dst_namespace']

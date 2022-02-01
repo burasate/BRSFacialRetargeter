@@ -26,9 +26,11 @@ if not rootPath in sys.path:
 import reTargeter
 import poseLib
 import updater
+import poseData
 imp.reload(reTargeter)
 imp.reload(poseLib)
 imp.reload(updater)
+imp.reload(poseData)
 
 def formatPath(path):
     path = path.replace("/", os.sep)
@@ -92,8 +94,8 @@ def poseLibraryBrowser(*_):
 
 def SetIdCurrentFrame(*_):
     text = cmds.textScrollList(poseSL,q=True,selectItem=True)[0]
-    poseDataJson = json.load(
-        open(cmds.textField(poseDataF, q=True, tx=True)))
+    #poseDataJson = json.load(open(cmds.textField(poseDataF, q=True, tx=True)))
+    poseDataJson = poseData.getPoseData()
 
     for data in poseDataJson:
         if text.__contains__(data['id']):
@@ -123,11 +125,12 @@ def getSrcBlendshapeSelect(*_):
 def updateUI(*_):
     cmds.textField(srcBsF, e=True, tx=configJson['src_blendshape'] )
     cmds.textField(dstNsF, e=True, tx=configJson['dst_namespace'] )
-    cmds.textField(poseDataF, e=True, tx=configJson['pose_data_path'] )
+    #cmds.textField(poseDataF, e=True, tx=configJson['pose_data_path'] )
     cmds.textField(poseLibF, e=True, tx=configJson['pose_library_path'] )
 
     try:
-        poseDataJson = json.load(open(cmds.textField(poseDataF, q=True, tx=True)))
+        #poseDataJson = json.load(open(cmds.textField(poseDataF, q=True, tx=True)))
+        poseDataJson = poseData.getPoseData()
     except:
         pass
     else:
@@ -138,8 +141,9 @@ def updateUI(*_):
                 name = name + ' '*(maxSpace - len(name))
             if len(name) > maxSpace:
                 name = name[:maxSpace]
-            text = '[ {} ] {} [ {} ]'.format(data['id'],name,data['type'])
+            text = ' [{}]  {}    [{}]'.format(data['id'],name,data['type'])
             cmds.textScrollList(poseSL,e=True,append=[text])
+
 
 def updateConfig(*_):
     global configPath
@@ -148,7 +152,7 @@ def updateConfig(*_):
     configJson['time'] = time.time()
     configJson['src_blendshape'] = cmds.textField(srcBsF, q=True, tx=True)
     configJson['dst_namespace'] = cmds.textField(dstNsF, q=True, tx=True)
-    configJson['pose_data_path'] = cmds.textField(poseDataF, q=True, tx=True)
+    #configJson['pose_data_path'] = cmds.textField(poseDataF, q=True, tx=True)
     configJson['pose_library_path'] = cmds.textField(poseLibF, q=True, tx=True)
 
     if configJson != json.load(open(configPath)) :
@@ -208,7 +212,7 @@ def supporter(*_):
 UI
 -----------------------------------------------------------------------
 """
-version = '0.04B'
+version = '0.06B'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
@@ -231,12 +235,15 @@ cmds.window(winID,e=True,w=10,h=10,sizeable=False)
 
 cmds.columnLayout(adj=False, w=winWidth)
 cmds.text(l='BRS Facial Retargeter' + ' - ' + version, fn='boldLabelFont', h=20, w=winWidth, bgc=colorSet['yellow'])
+cmds.text(l='', fn='smallPlainLabelFont', al='center', h=10, w=winWidth)
 
+"""
 cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .2, winWidth * .7, winWidth * .1),adj=2)
 cmds.text(l=' Data :',al='right')
 poseDataF = cmds.textField(w=winWidth*.7,ed=False)
 cmds.button(l='...',w=winWidth * .08,c=poseDataBrowser)
 cmds.setParent('..')
+"""
 
 cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .2, winWidth * .7, winWidth * .1),adj=2)
 cmds.text(l=' Library :',al='right')
@@ -256,38 +263,56 @@ dstNsF = cmds.textField(w=winWidth*.6)
 cmds.button(l='>',w=winWidth * .08,c=getDstNamespaceSelect)
 cmds.setParent('..')
 
-cmds.text(l='   Pose Library', fn='boldLabelFont', al='left', h=30, w=winWidth)
-#cmds.text(l='work in progress', fn='smallPlainLabelFont', al='left', h=20, w=winWidth)
+cmds.text(l='', fn='smallPlainLabelFont', al='center', h=10, w=winWidth)
+tabL = cmds.tabLayout(w=winWidth)
 
-poseSL = cmds.textScrollList(w=winWidth, numberOfRows=4, allowMultiSelection=False,
+poselibL = cmds.columnLayout(adj=False)
+
+cmds.text(l='Pose Library', fn='boldLabelFont', al='center', h=30, w=winWidth)
+
+cmds.button(l='Create Pose Library',w=winWidth-1.33,bgc=colorSet['shadow'], c=createPoselib)
+poseSL = cmds.textScrollList(w=winWidth-1.33, numberOfRows=10, allowMultiSelection=False,
 			append=[],removeAll=True,font='fixedWidthFont',dcc=SetIdCurrentFrame)
 
-#cmds.text(l='from selection', fn='smallPlainLabelFont', al='left', h=20, w=winWidth)
-cmds.rowLayout(numberOfColumns=3, columnWidth3=[(winWidth/3)-1.33*3,(winWidth/3)-1.33*3,(winWidth/3)-1.33*3])
-cmds.button(l='Create',w=(winWidth/3)-1.33,bgc=colorSet['shadow'], c=createPoselib)
-cmds.button(l='Load',w=(winWidth/3)-1.33,bgc=colorSet['shadow'], c=loadPoselib)
-cmds.button(l='Save',w=(winWidth/3)-1.33,bgc=colorSet['shadow'],c=savePoseLib)
+cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
+cmds.button(l='Load',w=(winWidth/2)-1.33,bgc=colorSet['shadow'], c=loadPoselib)
+cmds.button(l='Save',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=savePoseLib)
 cmds.setParent('..')
 
-#cmds.text(l='   UE Live Link', fn='boldLabelFont', al='left', h=30, w=winWidth)
-#cmds.text(l='work in progress', fn='smallPlainLabelFont', al='left', h=20, w=winWidth)
+cmds.text(l='\n    How to ?\n', al='center', fn='smallPlainLabelFont')
+cmds.text(l='    1. set base pose\n    2. create pose library\n    3. double click on list to set pose\n', al='left', fn='smallPlainLabelFont')
 
-cmds.text(l='   Retarget Link', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.setParent( '..' ) #end poselibL
+
+retargetL = cmds.columnLayout(adj=False)
+
+cmds.text(l='Retarget Link', fn='boldLabelFont', al='center', h=30, w=winWidth)
 
 cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
-cmds.button(l='Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=doRetarget)
-cmds.button(l='Delete',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=retargetClear)
+cmds.button(l='Create Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=doRetarget)
+cmds.button(l='Clear Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=retargetClear)
 cmds.setParent('..')
-cmds.button(l='Correct Pose Selection',w=winWidth-1,bgc=colorSet['shadow'],c=setCorrectPose)
 
-cmds.text(l='   Smooth Selection', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
+cmds.button(l='Correct Pose Selection',w=winWidth-1,bgc=colorSet['shadow'], h=30,c=setCorrectPose)
+
+#cmds.text(l='   Smooth Selection', fn='boldLabelFont', al='left', h=30, w=winWidth)
 cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
-cmds.button(l='Add',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=setSmooth)
-cmds.button(l='Remove',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=unsetSmooth)
+cmds.button(l='Add Smooth Sets',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=setSmooth)
+cmds.button(l='Remove Smooth Sets',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=unsetSmooth)
 cmds.setParent('..')
 
-cmds.text(l='   Bake Retarget Animation', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
+cmds.button(l='Interactive Playback',w=winWidth-1,bgc=colorSet['shadow'],c=lambda arg: cmds.play(rec=True))
+
+#cmds.text(l='   Bake Retarget Animation', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
 cmds.button(l='Bake Animation',w=winWidth-1,bgc=colorSet['shadow'],c=doBakeRetarget)
+
+cmds.setParent( '..' ) #end retargetL
+
+cmds.setParent( '..' ) #end tabL
+cmds.tabLayout(tabL, edit=True, tabLabel=((poselibL, 'Pose Library'), (retargetL, 'Retarget Link')))
 
 cmds.text(l='Created by Burasate Uttha', h=20, al='left', fn='smallPlainLabelFont')
 
@@ -317,6 +342,10 @@ def showUI(*_):
             json.dump(userS, jsonFile, indent=4)
     finally:
         updateUI()
+
+#Test
+cmds.showWindow(winID)
+updateUI()
 
 """
 Create by Burased Uttha
