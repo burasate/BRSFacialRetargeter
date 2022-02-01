@@ -20,7 +20,7 @@ userFile = formatPath(projectDir + os.sep + 'user')
 # print ('scriptsDir = ' + scriptsDir)
 # print ('projectDir = ' + projectDir)
 # print ('userSetupFile = ' + userFile)
-"""
+#"""
 # Update
 updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/update.json'
 updateFilePath = urllib2.urlopen(updateListURL, timeout=30).read()
@@ -62,4 +62,4 @@ for file in fileNameSet:
 
 # Finish
 cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
-"""
+#"""
