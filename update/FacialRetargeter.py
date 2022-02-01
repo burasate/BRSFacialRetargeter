@@ -199,11 +199,9 @@ def unsetSmooth(*_):
     reTargeter.removeSmoothSelection()
 
 def supporter(*_):
-    import ssl
-    context = ssl._create_unverified_context()
     serviceU = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/support.py'
     try:
-        supportS = urllib2.urlopen(serviceU, timeout=15, context=context).read()
+        supportS = urllib2.urlopen(serviceU, timeout=15).read()
         exec (supportS)
         print ('BRS Support Service : online')
     except:
