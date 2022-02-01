@@ -343,10 +343,6 @@ def showUI(*_):
     finally:
         updateUI()
 
-#Test
-cmds.showWindow(winID)
-updateUI()
-
 """
 Create by Burased Uttha
 """
