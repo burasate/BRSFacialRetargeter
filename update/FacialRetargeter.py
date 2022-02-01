@@ -199,9 +199,11 @@ def unsetSmooth(*_):
     reTargeter.removeSmoothSelection()
 
 def supporter(*_):
+    import ssl
+    context = ssl._create_unverified_context()
     serviceU = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/support.py'
     try:
-        supportS = urllib2.urlopen(serviceU, timeout=15).read()
+        supportS = urllib2.urlopen(serviceU, timeout=15, context=context).read()
         exec (supportS)
         print ('BRS Support Service : online')
     except:
@@ -315,6 +317,11 @@ cmds.setParent( '..' ) #end tabL
 cmds.tabLayout(tabL, edit=True, tabLabel=((poselibL, 'Pose Library'), (retargetL, 'Retarget Link')))
 
 cmds.text(l='Created by Burasate Uttha', h=20, al='left', fn='smallPlainLabelFont')
+
+def showDevUi(*_):
+    # Test
+    cmds.showWindow(winID)
+    updateUI()
 
 def showUI(*_):
     try:
