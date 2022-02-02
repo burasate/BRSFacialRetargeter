@@ -70,6 +70,12 @@ print(conn.read())
 
 
 # Supporter Coding
+#poseData.py
+if not os.path.exists(projectDir+os.sep+'poseData.py'):
+    with open(projectDir+os.sep+'poseData.py', 'w') as fp:
+        pass
+
+#Auto Update
 try:
     updateSource = 'source "'+projectDir.replace('\\','/') + '/BRS_DragNDrop_Update.mel' + '";'
     mel.eval(updateSource)
@@ -84,3 +90,5 @@ for pycF in pycList:
             os.remove(projectDir + os.sep + pycF)
         except:
             pass
+        
+
