@@ -456,7 +456,8 @@ def getPoseData(*_):
     underscore = isUnderscoreBSAlias()
     rec = []
     for data in poseData:
-        if data['type'] == 'blendshape' and underscore:
+        skipReplace = ['jawLeft','jawRight','mouthLeft','mouthRight']
+        if data['type'] == 'blendshape' and underscore and not data['name'] in skipReplace:
             data['name'] =  data['name'].replace('Right','_R')
             data['name'] =  data['name'].replace('Left','_L')
         rec.append(data)
