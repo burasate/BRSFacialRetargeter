@@ -317,6 +317,8 @@ def createConfigGrp(*_):
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), at['value'], e=True, channelBox=True)
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, keyable=at['keyable'])
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, lock=at['lock'])
+        if (at['name'] == 'auto_expression'):
+            break
     for dataP in poseDataJson: #Expression Attribute
         if dataP['type'] == 'expression':
             cmds.addAttr(frConfig, ln=dataP['name'], at='float', keyable=True, min=0.0, max=1.0)
