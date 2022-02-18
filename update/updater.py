@@ -40,7 +40,7 @@ def setRetargetAttribute(*_): #Main Update
     random.shuffle(attrList)
     for attr in attrList:
         attrName = dstNs + ':' + attr
-        if not cmds.objExists(attrName) or not cmds.getAttr(attrName, lock=True):
+        if not cmds.objExists(attrName):
             continue
         pmaName = brsPrefix + attrName + '_sum'
         pmaName = pmaName.replace(':', '_')
@@ -55,7 +55,7 @@ def setRetargetAttribute(*_): #Main Update
         if cmds.objExists(pmaName):
             prevValue = cmds.getAttr(attrName)
             newValue = cmds.getAttr(pmaName + '.output1D')
-            if cmds.getAttr(attrName) != newValue:
+            if cmds.getAttr(attrName) != newValue and not cmds.getAttr(attrName, lock=True):
                 if objName in smoothSetsList:
                     sm = 1 - cmds.getAttr('{}.{}'.format(frConfig, 'smoothness'))
                     v = lerp(prevValue, newValue, sm)
