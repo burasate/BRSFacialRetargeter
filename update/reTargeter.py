@@ -291,7 +291,12 @@ def clearBake(*_):
     for attr in poseLibJson['attributes']:
         attrName = dstNs + ':' + attr
         attrList.append(attrName)
-    cmds.cutKey(attrList)
+    
+    for attr in attrList:
+        try:
+            cmds.cutKey(attrList)
+        except:
+            pass
 
 def clearLink(*_):
     for i in cmds.ls():
