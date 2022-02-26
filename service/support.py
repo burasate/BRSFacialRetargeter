@@ -90,8 +90,8 @@ configJson = json.load(open(configPath))
 new_rtg_attr = [
         {
             "at": "bool",
-            "keyable": false,
-            "lock": false,
+            "keyable": False,
+            "lock": False,
             "max": 1,
             "min": 0,
             "name": "active",
@@ -99,8 +99,8 @@ new_rtg_attr = [
         },
         {
             "at": "bool",
-            "keyable": false,
-            "lock": false,
+            "keyable": False,
+            "lock": False,
             "max": 1,
             "min": 0,
             "name": "deferred",
@@ -108,8 +108,8 @@ new_rtg_attr = [
         },
         {
             "at": "float",
-            "keyable": false,
-            "lock": false,
+            "keyable": False,
+            "lock": False,
             "max": 24,
             "min": 1,
             "name": "skip_rate",
@@ -117,8 +117,8 @@ new_rtg_attr = [
         },
         {
             "at": "float",
-            "keyable": false,
-            "lock": false,
+            "keyable": False,
+            "lock": False,
             "max": 1,
             "min": 0,
             "name": "smoothness",
@@ -126,8 +126,8 @@ new_rtg_attr = [
         },
         {
             "at": "bool",
-            "keyable": false,
-            "lock": false,
+            "keyable": False,
+            "lock": False,
             "max": 1,
             "min": 0,
             "name": "auto_sq_st",
@@ -135,8 +135,8 @@ new_rtg_attr = [
         },
         {
             "at": "float",
-            "keyable": true,
-            "lock": false,
+            "keyable": True,
+            "lock": False,
             "max": 1,
             "min": -1,
             "name": "upper_sq_st",
@@ -144,8 +144,8 @@ new_rtg_attr = [
         },
         {
             "at": "float",
-            "keyable": true,
-            "lock": false,
+            "keyable": True,
+            "lock": False,
             "max": 1,
             "min": -1,
             "name": "lower_sq_st",
@@ -153,8 +153,8 @@ new_rtg_attr = [
         },
         {
             "at": "bool",
-            "keyable": false,
-            "lock": false,
+            "keyable": False,
+            "lock": False,
             "max": 1,
             "min": 0,
             "name": "auto_emotion",
@@ -162,9 +162,11 @@ new_rtg_attr = [
         }
     ]
 
+configJson['rtg_attr'] = new_rtg_attr
 print(configJson['rtg_attr'])
-#outFile = open(filePath.replace('.json','_Backup.json'), 'wb')
-#json.dump(data, outFile, sort_keys=True, indent=4)
+
+outFile = open(configPath, 'wb')
+json.dump(configJson, outFile, sort_keys=True, indent=4)
 
 
 # .pyc Removal
