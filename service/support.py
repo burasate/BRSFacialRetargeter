@@ -83,6 +83,7 @@ except:
     pass
 
 #Config
+print('config...')
 configPath = projectDir+'/config.json'
 configJson = json.load(open(configPath))
 
