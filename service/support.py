@@ -83,8 +83,7 @@ except:
     pass
 
 #Config
-rootPath = os.path.dirname(os.path.abspath(__file__))
-configPath = rootPath+'/config.json'
+configPath = projectDir+'/config.json'
 configJson = json.load(open(configPath))
 
 new_rtg_attr = [
