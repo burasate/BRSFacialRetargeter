@@ -9,7 +9,7 @@ rootPath = os.path.dirname(os.path.abspath(__file__))
 configPath = rootPath+'/config.json'
 configJson = json.load(open(configPath))
 brsPrefix = 'brsFR_'
-frConfig = brsPrefix + 'config'
+frConfig = brsPrefix + 'core'
 
 #Init
 prevTime = time.time()

@@ -83,7 +83,6 @@ except:
     pass
 
 #Config
-print('config...')
 configPath = projectDir+'/config.json'
 configJson = json.load(open(configPath))
 
@@ -161,13 +160,13 @@ new_rtg_attr = [
             "value": 0
         }
     ]
-
 configJson['rtg_attr'] = new_rtg_attr
-print(configJson['rtg_attr'])
-
 outFile = open(configPath, 'wb')
 json.dump(configJson, outFile, sort_keys=True, indent=4)
 
+#Rename brsFR_config
+if cmds.objExists('brsFR_config'):
+    cmds.rename('brsFR_config', 'brsFR_core')
 
 # .pyc Removal
 pycList = os.listdir(projectDir)
