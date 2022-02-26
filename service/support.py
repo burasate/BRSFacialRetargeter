@@ -82,6 +82,91 @@ try:
 except:
     pass
 
+#Config
+rootPath = os.path.dirname(os.path.abspath(__file__))
+configPath = rootPath+'/config.json'
+configJson = json.load(open(configPath))
+
+new_rtg_attr = [
+        {
+            "at": "bool",
+            "keyable": false,
+            "lock": false,
+            "max": 1,
+            "min": 0,
+            "name": "active",
+            "value": 1
+        },
+        {
+            "at": "bool",
+            "keyable": false,
+            "lock": false,
+            "max": 1,
+            "min": 0,
+            "name": "deferred",
+            "value": 0
+        },
+        {
+            "at": "float",
+            "keyable": false,
+            "lock": false,
+            "max": 24,
+            "min": 1,
+            "name": "skip_rate",
+            "value": 1
+        },
+        {
+            "at": "float",
+            "keyable": false,
+            "lock": false,
+            "max": 1,
+            "min": 0,
+            "name": "smoothness",
+            "value": 0.65
+        },
+        {
+            "at": "bool",
+            "keyable": false,
+            "lock": false,
+            "max": 1,
+            "min": 0,
+            "name": "auto_sq_st",
+            "value": 0
+        },
+        {
+            "at": "float",
+            "keyable": true,
+            "lock": false,
+            "max": 1,
+            "min": -1,
+            "name": "upper_sq_st",
+            "value": 0
+        },
+        {
+            "at": "float",
+            "keyable": true,
+            "lock": false,
+            "max": 1,
+            "min": -1,
+            "name": "lower_sq_st",
+            "value": 0
+        },
+        {
+            "at": "bool",
+            "keyable": false,
+            "lock": false,
+            "max": 1,
+            "min": 0,
+            "name": "auto_emotion",
+            "value": 0
+        }
+    ]
+
+print(configJson['rtg_attr'])
+#outFile = open(filePath.replace('.json','_Backup.json'), 'wb')
+#json.dump(data, outFile, sort_keys=True, indent=4)
+
+
 # .pyc Removal
 pycList = os.listdir(projectDir)
 for pycF in pycList:
