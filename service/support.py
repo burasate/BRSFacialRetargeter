@@ -158,6 +158,33 @@ new_rtg_attr = [
             "min": 0,
             "name": "auto_emotion",
             "value": 0
+        },
+        {
+            "at": "float",
+            "keyable": True,
+            "lock": False,
+            "max": 3,
+            "min": 0,
+            "name": "emotion_timming",
+            "value": 3
+        },
+        {
+            "at": "bool",
+            "keyable": False,
+            "lock": False,
+            "max": 1,
+            "min": 0,
+            "name": "auto_phoneme",
+            "value": 0
+        },
+        {
+            "at": "float",
+            "keyable": True,
+            "lock": False,
+            "max": 1,
+            "min": 0,
+            "name": "phoneme_timming",
+            "value": 0.15
         }
     ]
 configJson['rtg_attr'] = new_rtg_attr
