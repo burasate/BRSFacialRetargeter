@@ -41,12 +41,12 @@ def getSelection(*_):
     }
 
 def savePoseLibrary(filePath):
-    #poseDataJson = json.load(open(configJson['pose_data_path']))
     poseDataJson = poseData.getPoseData()
     selectData = getSelection()
 
     data = {
         'attributes': {},
+        'pose_attribute': {},
         'metadata': {
             'created' : time.time()
         }
@@ -76,21 +76,50 @@ def savePoseLibrary(filePath):
             # add id and value in data
             data['attributes'][attr]['id'].append(str(frame))
             data['attributes'][attr]['value'].append(value)
+            if dataP['id'] == "001": # is Base
+                data['pose_attribute'][attr] = round(value, 4)
 
             # print('id (frame)  {}     {}  =  {}'.format(frame, fullAttrName, value))
+
+    # share sets value
+    setsList = [d['sets'] for d in poseDataJson]
+    idList = [int(d['id']) for d in poseDataJson]
+    for attr in data['attributes']:
+        valueDict = {}
+        for i in range(len(idList)):
+            s = setsList[i]
+            if not s in valueDict:
+                valueDict[s] = []
+            v = data['attributes'][attr]['value'][i]
+            v = round(v,4)
+            valueDict[s].append(v)
+        #print(attr, valueDict)
+
+        for s in valueDict:
+            avg = sum(valueDict[s])/len(valueDict[s])
+            rate = 0.005
+            shareRate = avg * rate
+            shareRate = round(shareRate, 6)
+            #print('shareRate', s,shareRate)
+
+            for i in range(len(idList)):
+                if setsList[i] == s:
+                    new_v = data['attributes'][attr]['value'][i] + shareRate
+                    data['attributes'][attr]['value'][i] = new_v
+                    data['attributes'][attr]['value'][i]
 
 
     # delete useless attribute
     delAttrList = []
+    print (len(data['attributes']))
     for attr in data['attributes']:
-        if not cmds.objExists(attr):
-            continue
         minValue = min(data['attributes'][attr]['value'])
         maxValue = max(data['attributes'][attr]['value'])
         if minValue == maxValue:
             delAttrList.append(attr)
     for attr in delAttrList:
         del data['attributes'][attr]
+    print (len(data['attributes']))
 
     """
     # get min / max value
@@ -121,9 +150,7 @@ def loadPoseLibrary(filePath,dstNs):
             value = poseLibJson['attributes'][attr]['value'][index]
             cmds.setKeyframe(attrName, t=f, v=value)
 
-
 def createPoseLibrary(filePath):
-    #poseDataJson = json.load(open(configJson['pose_data_path']))
     poseDataJson = poseData.getPoseData()
     selectData = getSelection()
 
@@ -134,5 +161,3 @@ def createPoseLibrary(filePath):
     cmds.setKeyframe(selectData['selection'], t=keyList)
 
     savePoseLibrary(filePath)
-
-#savePoseLibrary(filePath='D:/GoogleDrive/Documents/2021/facialReTargeter/work/poseLib/PRE_Full_Armor.json')

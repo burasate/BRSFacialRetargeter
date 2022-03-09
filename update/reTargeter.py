@@ -9,7 +9,8 @@ rootPath = os.path.dirname(os.path.abspath(__file__))
 configPath = rootPath+'/config.json'
 configJson = json.load(open(configPath))
 brsPrefix = 'brsFR_'
-frConfig = brsPrefix + 'config'
+frConfig = brsPrefix + 'core'
+gMainProgressBar = mel.eval('$tmp = $gMainProgressBar')
 
 import imp
 import updater
@@ -57,7 +58,6 @@ def getFrameValue(nameSpace,frame):
     return data
 
 def getSrcBsData(srcBlendshape,frameList):
-    # poseDataJson = json.load(open(configJson['pose_data_path']))
     poseDataJson = poseData.getPoseData()
     gMainProgressBar = mel.eval('$tmp = $gMainProgressBar');
     cmds.progressBar( gMainProgressBar,
@@ -170,7 +170,7 @@ def BRSFaceRetargeter(srcBlendshape,dstNamespace,libraryPath,frameMin,frameMax):
         cmds.currentTime(f)
     print('Blendshape to Pose Retarget is Done   {}F - {}F'.format(frameMin,frameMax))
 
-def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath): #Correct Pose For One Attribute
+def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=0.65): #Correct Pose For One Attribute
     poseLibJson = json.load(open(configJson['pose_library_path']))
     curFrame = cmds.currentTime(q=True)
     #print('frame = {}'.format(curFrame))
@@ -187,8 +187,7 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath): #Correct
     srcBsData = getSrcBsData(srcBlendshape,[curFrame,curFrame+1])
 
     pmaName = brsPrefix + attrName + '_sum'
-    pmaName = pmaName.replace(':', '_')
-    pmaName = pmaName.replace('.', '_')
+    pmaName = pmaName.replace(':', '_').replace('.', '_')
     result = cmds.getAttr(pmaName+'.output1D')
     #print('current result = {}'.format(result))
 
@@ -236,7 +235,8 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath): #Correct
         poseValue = poseLibData[attrName]
         #print('id {}         pose lib value = {}'.format(bsId,poseValue))
 
-        poseValue_new = poseValue + diffValue_new
+        poseValue_new = poseValue + ( diffValue_new * learnRate )
+        poseValue_new = round(poseValue_new, 4)
         #print('id {}     new pose lib value = {}'.format(bsId,poseValue_new))
 
         #apply poseLib data
@@ -261,7 +261,7 @@ def updatePoseLibSelection(*_):
 
     """
     #Reset Config
-    frConfig = brsPrefix + 'config'
+    frConfig = brsPrefix + 'core'
     for at in configJson['rtg_attr']:
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, value=at['value'])
     """
@@ -299,15 +299,333 @@ def clearBake(*_):
             pass
 
 def clearLink(*_):
+    clearList = []
     for i in cmds.ls():
         if i.__contains__(brsPrefix):
-            try:
-                cmds.delete(i)
-            except:
-                pass
+            clearList.append(i)
+    cmds.delete(clearList)
+
+def autoEmotionLink(update=False):
+    emoLib = poseData.getEmotionLibrary()
+    poseDataJson = poseData.getPoseData()
+
+    emotionList = [data['name'] for data in poseDataJson if data['type'] == 'expression']
+    for data in emoLib:  # Error Node
+        data_index = emoLib.index(data)
+        for emotionName in emotionList:
+            emotion_index = emotionList.index(emotionName)
+
+            errorName = brsPrefix + data['name'] + '_' + emotionName + '_error'
+            if not cmds.objExists(errorName):
+                cmds.createNode('floatMath', n=errorName, skipSelect=True)
+                cmds.setAttr(errorName + '.operation', 1)
+                cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], data['name']), errorName + '.floatA')
+                weight = data['weight'][emotion_index]
+                cmds.setAttr(errorName + '.floatB', weight)
+
+            if update:
+                print('weight updated')
+                weight = data['weight'][emotion_index]
+                cmds.setAttr(errorName + '.floatB', weight)
+                return None
+
+            squareName = brsPrefix + data['name'] + '_' + emotionName + '_square'
+            if not cmds.objExists(squareName):
+                cmds.createNode('floatMath', n=squareName, skipSelect=True)
+                cmds.connectAttr(errorName + '.outFloat', squareName + '.floatA')
+                cmds.setAttr(squareName + '.floatB', 2)
+                cmds.setAttr(squareName + '.operation', 6)
+
+            sqrtName = brsPrefix + data['name'] + '_' + emotionName + '_sqrt'
+            if not cmds.objExists(sqrtName):
+                cmds.createNode('floatMath', n=sqrtName, skipSelect=True)
+                cmds.connectAttr(squareName + '.outFloat', sqrtName + '.floatA')
+                cmds.setAttr(sqrtName + '.floatB', 0.5)
+                cmds.setAttr(sqrtName + '.operation', 6)
+
+            avgName = brsPrefix + emotionName + '_totalErrorAvg'
+            if not cmds.objExists(avgName):
+                cmds.createNode('plusMinusAverage', n=avgName, skipSelect=True)
+                cmds.setAttr(avgName + '.operation', 3)
+            if cmds.objExists(avgName):
+                cmds.connectAttr(sqrtName + '.outFloat', avgName + '.input1D[{}]'.format(data_index), f=True)
+
+            weightName = brsPrefix + emotionName + '_weight'
+            if not cmds.objExists(weightName):
+                cmds.createNode('reverse', n=weightName, skipSelect=True)
+            if not cmds.isConnected(avgName + '.output1D', weightName + '.inputX'):
+                cmds.connectAttr(avgName + '.output1D', weightName + '.inputX', f=True)
+
+            weightTotalName = brsPrefix + 'emotion' + '_weightTotal'
+            if not cmds.objExists(weightTotalName):
+                cmds.createNode('plusMinusAverage', n=weightTotalName, skipSelect=True)
+            if not cmds.isConnected(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(emotion_index)):
+                cmds.connectAttr(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(emotion_index),
+                                 f=True)
+
+            weightMinName = brsPrefix + 'emotion' + '_weightMin'
+            if not cmds.objExists(weightMinName):
+                cmds.createNode('combinationShape', n=weightMinName, skipSelect=True)
+                cmds.setAttr(weightMinName + '.combinationMethod', 1)
+            if not cmds.isConnected(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(emotion_index)):
+                cmds.connectAttr(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(emotion_index),
+                                 f=True)
+
+            # (weightName - weightMinName)
+            weightMinMinusName = brsPrefix + emotionName + '_weightMinMinus'
+            if not cmds.objExists(weightMinMinusName):
+                cmds.createNode('floatMath', n=weightMinMinusName, skipSelect=True)
+                cmds.setAttr(weightMinMinusName + '.operation', 1)
+            if not cmds.isConnected(weightName + '.outputX', weightMinMinusName + '.floatA'):
+                cmds.connectAttr(weightName + '.outputX', weightMinMinusName + '.floatA', f=True)
+            if not cmds.isConnected(weightMinName + '.outputWeight', weightMinMinusName + '.floatB'):
+                cmds.connectAttr(weightMinName + '.outputWeight', weightMinMinusName + '.floatB', f=True)
+
+            # (weightTotalName - weightMinName)
+            weightTotalMinMinusName = brsPrefix + emotionName + '_weightTotalMinMinus'
+            if not cmds.objExists(weightTotalMinMinusName):
+                cmds.createNode('floatMath', n=weightTotalMinMinusName, skipSelect=True)
+                cmds.setAttr(weightTotalMinMinusName + '.operation', 1)
+            if not cmds.isConnected(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA'):
+                cmds.connectAttr(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA', f=True)
+            if not cmds.isConnected(weightMinName + '.outputWeight', weightTotalMinMinusName + '.floatB'):
+                cmds.connectAttr(weightMinName + '.outputWeight', weightTotalMinMinusName + '.floatB', f=True)
+
+            # (weightName - weightMinName) / (weightTotalName - weightMinName)
+            weightDevideName = brsPrefix + emotionName + '_weightDevide'
+            if not cmds.objExists(weightDevideName):
+                cmds.createNode('multiplyDivide', n=weightDevideName, skipSelect=True)
+                cmds.setAttr(weightDevideName + '.operation', 2)
+            if not cmds.isConnected(weightMinMinusName + '.outFloat', weightDevideName + '.input1X'):
+                cmds.connectAttr(weightMinMinusName + '.outFloat', weightDevideName + '.input1X', f=True)
+            if not cmds.isConnected(weightTotalMinMinusName + '.outFloat', weightDevideName + '.input2X'):
+                cmds.connectAttr(weightTotalMinMinusName + '.outFloat', weightDevideName + '.input2X', f=True)
+
+            """
+            # unitConversion
+            weightFactorName = brsPrefix + emotionName + '_weightFactor'
+            if not cmds.objExists(weightFactorName):
+                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.setAttr(weightFactorName + '.conversionFactor', 1)  # Tunning
+            if not cmds.isConnected(weightDevideName + '.outputX', weightFactorName + '.input'):
+                cmds.connectAttr(weightDevideName + '.outputX', weightFactorName + '.input', f=True)
+            """
+
+            weightDevideReverseName = brsPrefix + emotionName + '_weightDevideReverse'
+            if not cmds.objExists(weightDevideReverseName):
+                cmds.createNode('reverse', n=weightDevideReverseName, skipSelect=True)
+            if not cmds.isConnected(weightDevideName + '.outputX', weightDevideReverseName + '.inputX'):
+                cmds.connectAttr(weightDevideName + '.outputX', weightDevideReverseName + '.inputX', f=True)
+
+            weightMaxReverseName = brsPrefix + 'emotion' + '_weightMaxReverse'
+            if not cmds.objExists(weightMaxReverseName):
+                cmds.createNode('combinationShape', n=weightMaxReverseName, skipSelect=True)
+                cmds.setAttr(weightMaxReverseName + '.combinationMethod', 1)
+            if not cmds.isConnected(weightDevideReverseName + '.outputX', weightMaxReverseName + '.inputWeight[{}]'.format(emotion_index)):
+                cmds.connectAttr(weightDevideReverseName + '.outputX', weightMaxReverseName + '.inputWeight[{}]'.format(emotion_index),
+                                 f=True)
+
+            weightMaxName = brsPrefix + 'emotion' + '_weightMax'
+            if not cmds.objExists(weightMaxName):
+                cmds.createNode('reverse', n=weightMaxName, skipSelect=True)
+            if not cmds.isConnected(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX'):
+                cmds.connectAttr(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX', f=True)
+
+            weightOneHotName = brsPrefix + emotionName + '_weightOneHot'
+            if not cmds.objExists(weightOneHotName):
+                cmds.createNode('condition', n=weightOneHotName, skipSelect=True)
+                cmds.setAttr(weightOneHotName + '.colorIfTrueR', 1)
+                cmds.setAttr(weightOneHotName + '.colorIfFalseR', 0)
+            if not cmds.isConnected(weightDevideName + '.outputX', weightOneHotName + '.firstTerm'):
+                cmds.connectAttr(weightDevideName + '.outputX', weightOneHotName + '.firstTerm', f=True)
+            if not cmds.isConnected(weightMaxName + '.outputX', weightOneHotName + '.secondTerm'):
+                cmds.connectAttr(weightMaxName + '.outputX', weightOneHotName + '.secondTerm', f=True)
+
+            # unitConversion
+            weightFactorName = brsPrefix + emotionName + '_weightFactor'
+            if not cmds.objExists(weightFactorName):
+                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.setAttr(weightFactorName + '.conversionFactor', 1)  # Tunning
+            if not cmds.isConnected(weightOneHotName + '.outColorR', weightFactorName + '.input'):
+                cmds.connectAttr(weightOneHotName + '.outColorR', weightFactorName + '.input', f=True)
+
+def autoMouthLink(update=False):
+    mouthLib = poseData.getMouthLibrary()
+    poseDataJson = poseData.getPoseData()
+
+    mouthList = [data['name'] for data in poseDataJson if data['type'] == 'phoneme']
+    jawOpenList = [data['jaw_open'] for data in poseDataJson if data['type'] == 'phoneme']
+
+    jawOpenRevName = brsPrefix + 'jawOpenReverse'
+    if not cmds.objExists(jawOpenRevName):
+        cmds.createNode('reverse', n=jawOpenRevName, skipSelect=True)
+    if not cmds.isConnected('{}.{}'.format(configJson['src_blendshape'], 'jawOpen'), jawOpenRevName + '.inputX'):
+        cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], 'jawOpen'), jawOpenRevName + '.inputX', f=True)
+
+    for data in mouthLib:  # Error Node
+        data_index = mouthLib.index(data)
+        for mouthName in mouthList:
+            mouth_index = mouthList.index(mouthName)
+            jawNode = 'jawOpen'
+            isJawOpen = jawOpenList[mouth_index]
+            if isJawOpen == False:
+                jawNode = 'jawClose'
+
+            errorName = brsPrefix + data['name'] + '_' + mouthName + '_error'
+            if not cmds.objExists(errorName):
+                cmds.createNode('floatMath', n=errorName, skipSelect=True)
+                cmds.setAttr(errorName + '.operation', 1)
+                cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], data['name']), errorName + '.floatA')
+                weight = data['weight'][mouth_index]
+                cmds.setAttr(errorName + '.floatB', weight)
+
+            if update:
+                print('weight updated')
+                weight = data['weight'][mouth_index]
+                cmds.setAttr(errorName + '.floatB', weight)
+                return None
+
+            squareName = brsPrefix + data['name'] + '_' + mouthName + '_square'
+            if not cmds.objExists(squareName):
+                cmds.createNode('floatMath', n=squareName, skipSelect=True)
+                cmds.connectAttr(errorName + '.outFloat', squareName + '.floatA')
+                cmds.setAttr(squareName + '.floatB', 2)
+                cmds.setAttr(squareName + '.operation', 6)
+
+            sqrtName = brsPrefix + data['name'] + '_' + mouthName + '_sqrt'
+            if not cmds.objExists(sqrtName):
+                cmds.createNode('floatMath', n=sqrtName, skipSelect=True)
+                cmds.connectAttr(squareName + '.outFloat', sqrtName + '.floatA')
+                cmds.setAttr(sqrtName + '.floatB', 0.5)
+                cmds.setAttr(sqrtName + '.operation', 6)
+
+            avgName = brsPrefix + mouthName + '_totalErrorAvg'
+            if not cmds.objExists(avgName):
+                cmds.createNode('plusMinusAverage', n=avgName, skipSelect=True)
+                cmds.setAttr(avgName + '.operation', 3)
+            if cmds.objExists(avgName):
+                cmds.connectAttr(sqrtName + '.outFloat', avgName + '.input1D[{}]'.format(data_index), f=True)
+
+            weightName = brsPrefix + mouthName + '_weight'
+            if not cmds.objExists(weightName):
+                cmds.createNode('reverse', n=weightName, skipSelect=True)
+            if not cmds.isConnected(avgName + '.output1D', weightName + '.inputX'):
+                cmds.connectAttr(avgName + '.output1D', weightName + '.inputX', f=True)
+
+            weightTotalName = brsPrefix + jawNode + '_weightTotal'
+            if not cmds.objExists(weightTotalName):
+                cmds.createNode('plusMinusAverage', n=weightTotalName, skipSelect=True)
+            if not cmds.isConnected(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(mouth_index)):
+                cmds.connectAttr(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(mouth_index),
+                                 f=True)
+
+            weightMinName = brsPrefix + jawNode + '_weightMin'
+            if not cmds.objExists(weightMinName):
+                cmds.createNode('combinationShape', n=weightMinName, skipSelect=True)
+                cmds.setAttr(weightMinName + '.combinationMethod', 1)
+            if not cmds.isConnected(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(mouth_index)):
+                cmds.connectAttr(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(mouth_index),
+                                 f=True)
+
+            # (weightName - weightMinName)
+            weightMinMinusName = brsPrefix + mouthName + '_weightMinMinus'
+            if not cmds.objExists(weightMinMinusName):
+                cmds.createNode('floatMath', n=weightMinMinusName, skipSelect=True)
+                cmds.setAttr(weightMinMinusName + '.operation', 1)
+            if not cmds.isConnected(weightName + '.outputX', weightMinMinusName + '.floatA'):
+                cmds.connectAttr(weightName + '.outputX', weightMinMinusName + '.floatA', f=True)
+            if not cmds.isConnected(weightMinName + '.outputWeight', weightMinMinusName + '.floatB'):
+                cmds.connectAttr(weightMinName + '.outputWeight', weightMinMinusName + '.floatB', f=True)
+
+            # (weightTotalName - weightMinName)
+            weightTotalMinMinusName = brsPrefix + mouthName + '_weightTotalMinMinus'
+            if not cmds.objExists(weightTotalMinMinusName):
+                cmds.createNode('floatMath', n=weightTotalMinMinusName, skipSelect=True)
+                cmds.setAttr(weightTotalMinMinusName + '.operation', 1)
+            if not cmds.isConnected(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA'):
+                cmds.connectAttr(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA', f=True)
+            if not cmds.isConnected(weightMinName + '.outputWeight', weightTotalMinMinusName + '.floatB'):
+                cmds.connectAttr(weightMinName + '.outputWeight', weightTotalMinMinusName + '.floatB', f=True)
+
+            # (weightName - weightMinName) / (weightTotalName - weightMinName)
+            weightDevideName = brsPrefix + mouthName + '_weightDevide'
+            if not cmds.objExists(weightDevideName):
+                cmds.createNode('multiplyDivide', n=weightDevideName, skipSelect=True)
+                cmds.setAttr(weightDevideName + '.operation', 2)
+            if not cmds.isConnected(weightMinMinusName + '.outFloat', weightDevideName + '.input1X'):
+                cmds.connectAttr(weightMinMinusName + '.outFloat', weightDevideName + '.input1X', f=True)
+            if not cmds.isConnected(weightTotalMinMinusName + '.outFloat', weightDevideName + '.input2X'):
+                cmds.connectAttr(weightTotalMinMinusName + '.outFloat', weightDevideName + '.input2X', f=True)
+
+            """
+            # unitConversion
+            weightFactorName = brsPrefix + mouthName + '_weightFactor'
+            if not cmds.objExists(weightFactorName):
+                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.setAttr(weightFactorName + '.conversionFactor', 13)  # Tunning
+            if not cmds.isConnected(weightDevideName + '.outputX', weightFactorName + '.input'):
+                cmds.connectAttr(weightDevideName + '.outputX', weightFactorName + '.input', f=True)
+            """
+
+            weightDevideReverseName = brsPrefix + mouthName + '_weightDevideReverse'
+            if not cmds.objExists(weightDevideReverseName):
+                cmds.createNode('reverse', n=weightDevideReverseName, skipSelect=True)
+            if not cmds.isConnected(weightDevideName + '.outputX', weightDevideReverseName + '.inputX'):
+                cmds.connectAttr(weightDevideName + '.outputX', weightDevideReverseName + '.inputX', f=True)
+
+            weightMaxReverseName = brsPrefix + jawNode + '_weightMaxReverse'
+            if not cmds.objExists(weightMaxReverseName):
+                cmds.createNode('combinationShape', n=weightMaxReverseName, skipSelect=True)
+                cmds.setAttr(weightMaxReverseName + '.combinationMethod', 1)
+            if not cmds.isConnected(weightDevideReverseName + '.outputX',
+                                    weightMaxReverseName + '.inputWeight[{}]'.format(mouth_index)):
+                cmds.connectAttr(weightDevideReverseName + '.outputX',
+                                 weightMaxReverseName + '.inputWeight[{}]'.format(mouth_index),
+                                 f=True)
+
+            weightMaxName = brsPrefix + jawNode + '_weightMax'
+            if not cmds.objExists(weightMaxName):
+                cmds.createNode('reverse', n=weightMaxName, skipSelect=True)
+            if not cmds.isConnected(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX'):
+                cmds.connectAttr(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX', f=True)
+
+            weightOneHotName = brsPrefix + mouthName + '_weightOneHot'
+            if not cmds.objExists(weightOneHotName):
+                cmds.createNode('condition', n=weightOneHotName, skipSelect=True)
+                cmds.setAttr(weightOneHotName + '.colorIfTrueR', 1)
+                cmds.setAttr(weightOneHotName + '.colorIfFalseR', 0)
+            if not cmds.isConnected(weightDevideName + '.outputX', weightOneHotName + '.firstTerm'):
+                cmds.connectAttr(weightDevideName + '.outputX', weightOneHotName + '.firstTerm', f=True)
+            if not cmds.isConnected(weightMaxName + '.outputX', weightOneHotName + '.secondTerm'):
+                cmds.connectAttr(weightMaxName + '.outputX', weightOneHotName + '.secondTerm', f=True)
+
+            # Jaw Weight Factor
+            jawFactorName = brsPrefix + mouthName + '_jawFactor'
+            if not cmds.objExists(jawFactorName):
+                cmds.createNode('multiplyDivide', n=jawFactorName, skipSelect=True)
+                cmds.setAttr(jawFactorName + '.operation', 1)
+            if not cmds.isConnected(weightOneHotName + '.outColorR', jawFactorName + '.input1X'):
+                cmds.connectAttr(weightOneHotName + '.outColorR', jawFactorName + '.input1X', f=True)
+
+            # JawWeight
+            if isJawOpen:
+                if not cmds.isConnected('{}.{}'.format(configJson['src_blendshape'], 'jawOpen'),
+                                        jawFactorName + '.input2X'):
+                    cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], 'jawOpen'),
+                                     jawFactorName + '.input2X', f=True)
+            else:
+                if not cmds.isConnected(jawOpenRevName + '.outputX', jawFactorName + '.input2X'):
+                    cmds.connectAttr(jawOpenRevName + '.outputX', jawFactorName + '.input2X', f=True)
+
+            # unitConversion
+            weightFactorName = brsPrefix + mouthName + '_weightFactor'
+            if not cmds.objExists(weightFactorName):
+                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.setAttr(weightFactorName + '.conversionFactor', 1)  # Tunning
+            if not cmds.isConnected(jawFactorName + '.outputX', weightFactorName + '.input'):
+                cmds.connectAttr(jawFactorName + '.outputX', weightFactorName + '.input', f=True)
 
 def createConfigGrp(*_):
-    # poseDataJson = json.load(open(configJson['pose_data_path']))
     poseDataJson = poseData.getPoseData()
     smoothSetsName = brsPrefix + 'smoothSets'
     if not cmds.objExists(smoothSetsName):
@@ -324,6 +642,7 @@ def createConfigGrp(*_):
         cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, lock=at['lock'])
         if (at['name'] == 'auto_expression'):
             break
+
     for dataP in poseDataJson: #Expression Attribute
         if dataP['type'] == 'expression':
             cmds.addAttr(frConfig, ln=dataP['name'], at='float', keyable=True, min=0.0, max=1.0)
@@ -333,17 +652,147 @@ def createConfigGrp(*_):
         else:
             continue
 
+    for dataP in poseDataJson:  # Phoneme Attribute
+        if dataP['type'] == 'phoneme':
+            cmds.addAttr(frConfig, ln=dataP['name'], at='float', keyable=True, min=0.0, max=1.0)
+            cmds.setAttr('{}.{}'.format(frConfig, dataP['name']), 0.0, e=True, channelBox=True)
+            cmds.setAttr('{}.{}'.format(frConfig, dataP['name']), e=True, keyable=False)
+            cmds.setAttr('{}.{}'.format(frConfig, dataP['name']), e=True, lock=False)
+        else:
+            continue
+
+    phonemeList = [data['name'] for data in poseDataJson if data['type'] == 'phoneme']
+    # Phoneme Blend
+    for p in phonemeList:
+        index = phonemeList.index(p)
+        # Phoneme Reverse
+        mouthReverseName = brsPrefix + p + '_mouthReverse'
+        mouthReverseName = mouthReverseName.replace('.', '_').replace(':', '_')
+        if not cmds.objExists(mouthReverseName):
+            cmds.createNode('reverse', n=mouthReverseName, skipSelect=True)
+        if not cmds.isConnected(frConfig + '.' + p, mouthReverseName + '.inputX'):
+            cmds.connectAttr(frConfig + '.' + p, mouthReverseName + '.inputX', f=True)
+
+        mouthRevMinName = brsPrefix + 'mouthRevMin'
+        mouthRevMinName = mouthRevMinName.replace('.', '_').replace(':', '_')
+        if not cmds.objExists(mouthRevMinName):
+            cmds.createNode('combinationShape', n=mouthRevMinName, skipSelect=True)
+            cmds.setAttr(mouthRevMinName + '.combinationMethod', 1)
+        if not cmds.isConnected(mouthReverseName + '.outputX',
+                                mouthRevMinName + '.inputWeight[{}]'.format(index)):
+            cmds.connectAttr(mouthReverseName + '.outputX',
+                             mouthRevMinName + '.inputWeight[{}]'.format(index),f=True)
+
     cmds.expression(name=frExp,
                     s=
-                    'if (brsFR_config.active == 1 && brsFR_config.deferred == 0)\n' + \
+                    'if (brsFR_core.active == 1 && brsFR_core.deferred == 0)\n' + \
                     '{\npython( \"FacialRetargeter.updater.setRetargetAttribute()\" );\n}\n' + \
-                    'else if (brsFR_config.active == 1 && brsFR_config.deferred == 1)' + \
+                    'else if (brsFR_core.active == 1 && brsFR_core.deferred == 1)' + \
                     '{\npython( \"cmds.evalDeferred(\'FacialRetargeter.updater.setRetargetAttribute()\')\" );\n}\n'
                     )
 
+def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId='001',isUpdate=False):
+    """
+    :param poseData: poseDataJson
+    :param poseLib: poseLibJson
+    :param srcBs: source blenshape
+    :param dstNs: destination namespace
+    :param dataType: 'blendshape', 'expression', 'phoneme'
+    :param baseId: 001
+    :return: -
+    """
+    global gMainProgressBar
+    mouthShapeList = [data['name'] for data in poseData if data['type'] == 'blendshape' and
+                      ('mouth' in data['name'] or 'jaw' in data['name'])]
+
+    # --------------------
+    # Main
+    # --------------------
+    for data in poseData:
+        if data['type'] != dataType:
+            continue
+        bsId = data['id']
+        bsAttr = srcBs + '.' + data['name']
+
+        cmds.progressBar(gMainProgressBar, edit=True, step=1,
+                         status='Linking {} : {}'.format(data['type'],data['name']))
+
+        for attr in poseLib['attributes']:
+            attrName = dstNs + ':' + attr
+            #if not 'Jaw_Ctrl.rotateX' in attrName: #Testing for one Attribute
+                #continue
+
+            if isUpdate: #skip below when update only
+                if not attrName in getObjectAttributeName(cmds.ls(sl=True)):
+                    continue
+
+            # Input --------------------
+            # Change * Weight
+            mdName = brsPrefix + data['name'] + '_' + attrName + '_diffWeight'
+            mdName = mdName.replace('.', '_').replace(':', '_')
+            if not cmds.objExists(mdName):
+                cmds.createNode('multDoubleLinear', n=mdName, skipSelect=True)
+            if not isUpdate and dataType in ['blendshape']:
+                cmds.connectAttr(bsAttr, mdName + '.input1', f=True)
+            elif not isUpdate and dataType in ['expression', 'phoneme']:
+                cmds.connectAttr('{}.{}'.format(frConfig, data['name']), mdName + '.input1', f=True)
+
+            if not bsId in poseLib['attributes'][attr]['id']:
+                continue
+            index = poseLib['attributes'][attr]['id'].index(bsId)
+            poseValue = poseLib['attributes'][attr]['value'][index]
+            baseData = getIDValue(dstNs,baseId)
+            baseValue = baseData[attrName]
+            diffValue = poseValue-baseValue
+            cmds.setAttr(mdName + '.input2', diffValue)
+
+            if isUpdate == True:
+                continue
+
+            # Switch Weight Blend (Optional for other condition weight like mouth switching)
+            switchBlendName = brsPrefix + data['name'] + '_' + attrName + '_switchBlend'
+            switchBlendName = switchBlendName.replace('.', '_').replace(':', '_')
+            if not cmds.objExists(switchBlendName):
+                cmds.createNode('multDoubleLinear', n=switchBlendName, skipSelect=True)
+                cmds.setAttr(switchBlendName + '.input1', 1)
+                cmds.setAttr(switchBlendName + '.input2', 1)
+            if not cmds.isConnected(mdName + '.output', switchBlendName + '.input1'):
+                cmds.connectAttr(mdName + '.output', switchBlendName + '.input1', f=True)
+
+            # Sum of Weight (Output)
+            pmaName = brsPrefix + attrName + '_sum'
+            pmaName = pmaName.replace(':', '_').replace('.', '_')
+            if not cmds.objExists(pmaName):
+                cmds.createNode('plusMinusAverage', n=pmaName, skipSelect=True)
+                cmds.setAttr(pmaName + '.input1D[{}]'.format(baseId),baseValue)
+            if not cmds.isConnected(switchBlendName + '.output', pmaName + '.input1D[{}]'.format(bsId)):
+                cmds.connectAttr(switchBlendName + '.output', pmaName + '.input1D[{}]'.format(bsId), f=True)
+            # End of Output --------------------
+
+    # Auto Phoneme Link (Optional)
+    if dataType == 'phoneme' and isUpdate == False:
+        for data in poseData:
+            for attr in poseLib['attributes']:
+                attrName = dstNs + ':' + attr
+
+                pmaName = brsPrefix + attrName + '_sum'
+                pmaName = pmaName.replace(':', '_').replace('.', '_')
+                if not cmds.objExists(pmaName):
+                    continue
+
+                # Auto Phoneme Mouth Reverse Link
+                for ms in mouthShapeList:
+                    switchBlendName = brsPrefix + ms + '_' + attrName + '_switchBlend'
+                    switchBlendName = switchBlendName.replace('.', '_').replace(':', '_')
+                    mouthRevMinName = brsPrefix + 'mouthRevMin'
+                    mouthRevMinName = mouthRevMinName.replace('.', '_').replace(':', '_')
+                    if not cmds.objExists(mouthRevMinName) or not cmds.objExists(switchBlendName):
+                        continue
+                    if not cmds.isConnected(mouthRevMinName + '.outputWeight', switchBlendName + '.input2'):
+                        cmds.connectAttr(mouthRevMinName + '.outputWeight', switchBlendName + '.input2', f=True)
 
 def RetargetLink(forceConnect=False,update=False):
-    # poseDataJson = json.load(open(configJson['pose_data_path']))
+    global frConfig, gMainProgressBar
     poseDataJson = poseData.getPoseData()
     poseLibJson = json.load(open(configJson['pose_library_path']))
     srcBs = configJson['src_blendshape']
@@ -355,16 +804,23 @@ def RetargetLink(forceConnect=False,update=False):
     if not update:
         clearLink()
         createConfigGrp()
+        autoEmotionLink()
+        autoMouthLink()
 
     totalAttr = len(poseLibJson['attributes'])
-    gMainProgressBar = mel.eval('$tmp = $gMainProgressBar')
+    cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
     cmds.progressBar(gMainProgressBar,
                      edit=True,
                      beginProgress=True,
                      isInterruptable=False,
                      maxValue=len(poseDataJson) + 1)
 
-    # blendshpae link
+    poseDataLink(poseDataJson, poseLibJson, srcBs, dstNs, dataType='blendshape', baseId=baseId, isUpdate=update)
+    poseDataLink(poseDataJson, poseLibJson, srcBs, dstNs, dataType='expression', baseId=baseId, isUpdate=update)
+    poseDataLink(poseDataJson, poseLibJson, srcBs, dstNs, dataType='phoneme', baseId=baseId, isUpdate=update)
+
+    """
+    # blendshape link
     for data in poseDataJson:
         if data['type'] != 'blendshape':
             continue
@@ -376,9 +832,6 @@ def RetargetLink(forceConnect=False,update=False):
                                                                                                  totalAttr))
 
         for attr in poseLibJson['attributes']:
-            #if attr != 'cJaw.rotateZ':
-                #continue
-
             attrName = dstNs + ':' + attr
 
             if update: #skip below when update only
@@ -411,7 +864,7 @@ def RetargetLink(forceConnect=False,update=False):
                 cmds.setAttr(pmaName + '.input1D[{}]'.format(baseId),baseValue)
             if not cmds.isConnected(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId)):
                 cmds.connectAttr(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId), f=True)
-
+    
     # expression link
     for data in poseDataJson:
         if data['type'] != 'expression':
@@ -425,7 +878,6 @@ def RetargetLink(forceConnect=False,update=False):
 
         for attr in poseLibJson['attributes']:
             attrName = dstNs + ':' + attr
-            frConfig = brsPrefix + 'config'
 
             if update:  # skip below when update only
                 if not attrName in getObjectAttributeName(cmds.ls(sl=True)):
@@ -452,13 +904,21 @@ def RetargetLink(forceConnect=False,update=False):
             pmaName = pmaName.replace('.', '_')
             if cmds.objExists(pmaName) and not cmds.isConnected(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId)):
                 cmds.connectAttr(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId), f=True)
+    """
+
+    """
+    emotionList = [data['name'] for data in poseDataJson if data['type'] == 'expression']
+    for emotionName in emotionList:
+        weightFactorName = brsPrefix + emotionName + '_weightFactor'
+        cmds.connectAttr(weightFactorName + '.output', frConfig + '.' + emotionName,
+                         f=True)
+    """
 
     #End Progress
     cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
-    cmds.select(cl=True)
+    print('Retarget Link Finish')
 
 def bakeRetarget(*_):
-    # poseDataJson = json.load(open(configJson['pose_data_path']))
     poseDataJson = poseData.getPoseData()
     poseLibJson = json.load(open(configJson['pose_library_path']))
     srcBs = configJson['src_blendshape']
@@ -500,7 +960,6 @@ def addSmoothSelection(*_):
         if objName in selection:
             cmds.sets(objName, e=True, addElement=smoothSetsName)
 
-
 def removeSmoothSelection(*_):
     smoothSetsName = brsPrefix + 'smoothSets'
     selection = cmds.ls(sl=True)
@@ -509,3 +968,14 @@ def removeSmoothSelection(*_):
 
     for objName in selection:
         cmds.sets(objName, remove=smoothSetsName)
+
+if __name__ == 'reTargeter':
+    #clearLink()
+    #createConfigGrp()
+    #autoEmotionLink()
+    #autoMouthLink()
+    pass
+
+
+
+

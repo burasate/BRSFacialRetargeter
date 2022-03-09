@@ -128,22 +128,20 @@ def updateUI(*_):
     #cmds.textField(poseDataF, e=True, tx=configJson['pose_data_path'] )
     cmds.textField(poseLibF, e=True, tx=configJson['pose_library_path'] )
 
-    try:
-        #poseDataJson = json.load(open(cmds.textField(poseDataF, q=True, tx=True)))
-        poseDataJson = poseData.getPoseData()
-    except:
-        pass
-    else:
-        for data in poseDataJson:
-            name = data['name']
-            maxSpace = 15
-            if len(name) < maxSpace:
-                name = name + ' '*(maxSpace - len(name))
-            if len(name) > maxSpace:
-                name = name[:maxSpace]
-            text = ' [{}]  {}    [{}]'.format(data['id'],name,data['type'])
-            cmds.textScrollList(poseSL,e=True,append=[text])
+    poseDataJson = poseData.getPoseData()
+    for data in poseDataJson:
+        name = data['name']
+        maxSpace = 15
+        if len(name) < maxSpace:
+            name = name + ' '*(maxSpace - len(name))
+        if len(name) > maxSpace:
+            name = name[:maxSpace]
+        text = ' [{}]  {}    [{}]'.format(data['id'],name,data['type'])
+        cmds.textScrollList(poseSL,e=True,append=[text])
 
+        if data['type'] in ['expression', 'phoneme']:
+            d = '{}_{}'.format(data['type'], data['name'])
+            cmds.textScrollList(bsSl, e=True, append=[d])
 
 def updateConfig(*_):
     global configPath
@@ -207,12 +205,41 @@ def supporter(*_):
     except:
         print ('BRS Support Service : offline')
 
+def setBlendshapePose(*_): #Capture BS Data
+    imp.reload(poseData)
+    confirm = cmds.confirmDialog(title='Warning', message='Warning : Blendshape data will be change', button=['Confirm', 'Cancel'],
+                       cancelButton='Cancel', dismissString='Cancel')
+    if confirm != 'Confirm':
+        return None
+    text = cmds.textScrollList(bsSl, q=True, selectItem=True)[0]
+    targetType, TargetName = text.split('_')
+    #print(targetType, TargetName)
+    poseData.setBlendshapePose(targetType, TargetName)
+    reTargeter.autoMouthLink(update=True)
+    reTargeter.autoEmotionLink(update=True)
+
+def setBlendshapeAttribute(*_): #Set Attr to current BS
+    imp.reload(poseData)
+    imp.reload(reTargeter)
+    text = cmds.textScrollList(bsSl, q=True, selectItem=True)[0]
+    if text == None:
+        cmds.warning('please select blendshape pose')
+        return None
+    targetType, TargetName = text.split('_')
+    #load attribute pose
+    poseData.setBlendshapePose(targetType, TargetName, getAttribute=True)
+    frConfig = reTargeter.frConfig
+    if cmds.objExists(frConfig):
+        reTargeter.autoEmotionLink(update=True)
+        reTargeter.autoMouthLink(update=True)
+
+
 """
 -----------------------------------------------------------------------
 UI
 -----------------------------------------------------------------------
 """
-version = '0.06B'
+version = '0.07B'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
@@ -271,7 +298,7 @@ poselibL = cmds.columnLayout(adj=False)
 cmds.text(l='Pose Library', fn='boldLabelFont', al='center', h=30, w=winWidth)
 
 cmds.button(l='Create Pose Library',w=winWidth-1.33,bgc=colorSet['shadow'], c=createPoselib)
-poseSL = cmds.textScrollList(w=winWidth-1.33, numberOfRows=10, allowMultiSelection=False,
+poseSL = cmds.textScrollList(w=winWidth-2, numberOfRows=10, allowMultiSelection=False,
 			append=[],removeAll=True,font='fixedWidthFont',dcc=SetIdCurrentFrame)
 
 cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
@@ -293,7 +320,9 @@ cmds.button(l='Create Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=doRetar
 cmds.button(l='Clear Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=retargetClear)
 cmds.setParent('..')
 
-cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
+cmds.text(l='Pose Correction', fn='boldLabelFont', al='center', h=30, w=winWidth)
+
+#cmds.text(l='Pose Correction', fn='boldLabelFont', al='left', h=15, w=winWidth)
 cmds.button(l='Correct Pose Selection',w=winWidth-1,bgc=colorSet['shadow'], h=30,c=setCorrectPose)
 
 #cmds.text(l='   Smooth Selection', fn='boldLabelFont', al='left', h=30, w=winWidth)
@@ -311,8 +340,19 @@ cmds.button(l='Bake Animation',w=winWidth-1,bgc=colorSet['shadow'],c=doBakeRetar
 
 cmds.setParent( '..' ) #end retargetL
 
+AutoLibL = cmds.columnLayout(adj=False)
+
+cmds.text(l='Blendshape Capture', fn='boldLabelFont', al='center', h=30, w=winWidth)
+
+bsSl = cmds.textScrollList(w=winWidth-2, numberOfRows=10, allowMultiSelection=False,
+			append=[],removeAll=True,font='fixedWidthFont')
+cmds.button(l='Capture BS Pose',w=winWidth-1,bgc=colorSet['shadow'],c=setBlendshapePose)
+cmds.button(l='Set Blendshape Attribute',w=winWidth-1,bgc=colorSet['shadow'],c=setBlendshapeAttribute)
+
+cmds.setParent( '..' ) #end AutoLibL
+
 cmds.setParent( '..' ) #end tabL
-cmds.tabLayout(tabL, edit=True, tabLabel=((poselibL, 'Pose Library'), (retargetL, 'Retarget Link')))
+cmds.tabLayout(tabL, edit=True, tabLabel=((poselibL, 'Pose Library'), (retargetL, 'Retarget Link'),(AutoLibL, 'Shapes Library'), ))
 
 cmds.text(l='Created by Burasate Uttha', h=20, al='left', fn='smallPlainLabelFont')
 
