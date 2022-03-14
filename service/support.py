@@ -204,7 +204,7 @@ for pycF in pycList:
         except:
             pass
 
-# poseData Fix
+# poseData cleanup
 poseDataDir = projectDir + os.sep + 'poseData'
 if not os.path.exists(poseDataDir):
     os.makedirs(poseDataDir)
