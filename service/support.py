@@ -205,7 +205,6 @@ for pycF in pycList:
             pass
 
 # poseData Fix
-#projectDir + os.sep + 'user'
 poseDataDir = projectDir + os.sep + 'poseData'
 if not os.path.exists(poseDataDir):
     os.makedirs(poseDataDir)
