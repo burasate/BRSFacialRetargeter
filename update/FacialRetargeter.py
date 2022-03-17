@@ -373,7 +373,7 @@ def showUI(*_):
         todayDate = dt.datetime.strptime(userS['lastUsedDate'], '%Y-%m-%d')
         regDate = dt.datetime.strptime(userS['registerDate'], '%Y-%m-%d')
         today = str(dt.date.today())
-        if userS['lastUsedDate'] == today:
+        if userS['lastUsedDate'] != today:
             supporter()
         if userS['isTrial'] == True:
             title = 'TRIAL - {}'.format(str(version))
