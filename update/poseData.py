@@ -493,23 +493,23 @@ emotionLib = [{'name': 'browDownLeft', 'weight': zeroEmotionList},
                 {'name': 'cheekSquintRight', 'weight': zeroEmotionList},
                 {'name': 'eyeBlinkLeft', 'weight': zeroEmotionList},
                 {'name': 'eyeBlinkRight', 'weight': zeroEmotionList},
-                {'name': 'eyeLookDownLeft', 'weight': zeroEmotionList},
-                {'name': 'eyeLookDownRight', 'weight': zeroEmotionList},
-                {'name': 'eyeLookInLeft', 'weight': zeroEmotionList},
-                {'name': 'eyeLookInRight', 'weight': zeroEmotionList},
-                {'name': 'eyeLookOutLeft', 'weight': zeroEmotionList},
-                {'name': 'eyeLookOutRight', 'weight': zeroEmotionList},
-                {'name': 'eyeLookUpLeft', 'weight': zeroEmotionList},
-                {'name': 'eyeLookUpRight', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookDownLeft', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookDownRight', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookInLeft', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookInRight', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookOutLeft', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookOutRight', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookUpLeft', 'weight': zeroEmotionList},
+                #{'name': 'eyeLookUpRight', 'weight': zeroEmotionList},
                 {'name': 'eyeSquintLeft', 'weight': zeroEmotionList},
                 {'name': 'eyeSquintRight', 'weight': zeroEmotionList},
                 {'name': 'eyeWideLeft', 'weight': zeroEmotionList},
                 {'name': 'eyeWideRight', 'weight': zeroEmotionList},
-                {'name': 'jawForward', 'weight': zeroEmotionList},
-                {'name': 'jawLeft', 'weight': zeroEmotionList},
-                {'name': 'jawOpen', 'weight': zeroEmotionList},
-                {'name': 'jawRight', 'weight': zeroEmotionList},
-                {'name': 'mouthClose', 'weight': zeroEmotionList},
+                #{'name': 'jawForward', 'weight': zeroEmotionList},
+                #{'name': 'jawLeft', 'weight': zeroEmotionList},
+                #{'name': 'jawOpen', 'weight': zeroEmotionList},
+                #{'name': 'jawRight', 'weight': zeroEmotionList},
+                #{'name': 'mouthClose', 'weight': zeroEmotionList},
                 {'name': 'mouthDimpleLeft', 'weight': zeroEmotionList},
                 {'name': 'mouthDimpleRight', 'weight': zeroEmotionList},
                 {'name': 'mouthFrownLeft', 'weight': zeroEmotionList},
@@ -571,9 +571,12 @@ if __name__ == 'BRSFacialRetargeter.poseData' or 'poseData':
         if not 'emotion.json' in poseDataList:
             outFile = open(emotionPath, 'wb')
             json.dump(emotionLib, outFile, sort_keys=True, indent=4)
+            outFile.close()
         if not 'mouth.json' in poseDataList:
             outFile = open(mouthPath, 'wb')
             json.dump(mouthLib, outFile, sort_keys=True, indent=4)
+            outFile.close()
+        cmds.pause(sec=1)
 
     # Index Checking
     mouth_len_old = len(json.load(open(mouthPath))[0]['weight'])
@@ -582,6 +585,7 @@ if __name__ == 'BRSFacialRetargeter.poseData' or 'poseData':
         os.remove(mouthPath)
         outFile = open(mouthPath, 'wb')
         json.dump(mouthLib, outFile, sort_keys=True, indent=4)
+        outFile.close()
         cmds.warning('reset phoneme poses data')
     emotion_len_old = len(json.load(open(emotionPath))[0]['weight'])
     emotion_len_new = len(emotionLib[0]['weight'])
@@ -589,6 +593,7 @@ if __name__ == 'BRSFacialRetargeter.poseData' or 'poseData':
         os.remove(emotionPath)
         outFile = open(emotionPath, 'wb')
         json.dump(emotionLib, outFile, sort_keys=True, indent=4)
+        outFile.close()
         cmds.warning('reset emotion poses data')
 
 
@@ -647,7 +652,7 @@ def getMouthLibrary(*_):
         rec.append(data)
     return rec
 
-def setBlendshapePose(targetType, targetName, blend = 0.2, bsName=configJson['src_blendshape'], getAttribute=False):
+def setBlendshapePose(targetType, targetName, blend = 0.5, bsName=configJson['src_blendshape'], getAttribute=False):
     """
     :param targetType:
     :param targetName:
