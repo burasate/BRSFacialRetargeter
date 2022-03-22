@@ -927,7 +927,8 @@ def bakeRetarget(*_):
     attrList = []
     for attr in poseLibJson['attributes']:
         attrName = dstNs + ':' + attr
-        attrList.append(attrName)
+        if cmds.objExists(attrName):
+            attrList.append(attrName)
 
     minKeyframe = round(cmds.playbackOptions(q=True, minTime=True))
     maxKeyframe = round(cmds.playbackOptions(q=True, maxTime=True))
