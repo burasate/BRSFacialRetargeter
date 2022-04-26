@@ -29,8 +29,11 @@ def getSelection(*_):
             objName = obj.split(':')[-1]
         objectList.append(objName)
 
-        #print(cmds.listAttr(obj, keyable=True, unlocked=True))
-        for attr in cmds.listAttr(obj, keyable=True, unlocked=True):
+        keyList = cmds.listAttr(obj, keyable=True, unlocked=True)
+        if keyList == None:
+            print('skip {} because havn\'t keyframe'.format(obj))
+            continue
+        for attr in keyList:
             attrList.append('{}.{}'.format(objName, attr))
 
     return {
@@ -41,6 +44,7 @@ def getSelection(*_):
     }
 
 def savePoseLibrary(filePath):
+
     poseDataJson = poseData.getPoseData()
     selectData = getSelection()
 
