@@ -18,6 +18,11 @@ import poseData
 imp.reload(updater)
 imp.reload(poseData)
 
+if sys.version[0] == '3':
+    writeMode = 'w'
+else:
+    writeMode = 'wb'
+
 def reloadConfig(*_):
     global configJson
     configJson = json.load(open(configPath))
@@ -250,7 +255,7 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         newValue = poseValue_new
 
     # save update pose library
-    outFile = open(libraryPath, 'wb')
+    outFile = open(libraryPath, writeMode)
     json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
     print('{} Updated in Pose Library  {}  to  {}'.format(attrName,round(oldValue,4),round(newValue,4)))
 
@@ -818,101 +823,6 @@ def RetargetLink(forceConnect=False,update=False):
     poseDataLink(poseDataJson, poseLibJson, srcBs, dstNs, dataType='blendshape', baseId=baseId, isUpdate=update)
     poseDataLink(poseDataJson, poseLibJson, srcBs, dstNs, dataType='expression', baseId=baseId, isUpdate=update)
     poseDataLink(poseDataJson, poseLibJson, srcBs, dstNs, dataType='phoneme', baseId=baseId, isUpdate=update)
-
-    """
-    # blendshape link
-    for data in poseDataJson:
-        if data['type'] != 'blendshape':
-            continue
-        bsId = data['id']
-        bsAttr = srcBs + '.' + data['name']
-
-        cmds.progressBar(gMainProgressBar, edit=True, step=1,
-                         status='Linking Blendshape To Pose : {} ( total {} attributes )'.format(data['name'],
-                                                                                                 totalAttr))
-
-        for attr in poseLibJson['attributes']:
-            attrName = dstNs + ':' + attr
-
-            if update: #skip below when update only
-                if not attrName in getObjectAttributeName(cmds.ls(sl=True)):
-                    continue
-
-            mdName = brsPrefix + data['name'] + '_' + attrName + '_mulDou'
-            mdName = mdName.replace('.', '_')
-            mdName = mdName.replace(':', '_')
-            if not cmds.objExists(mdName):
-                cmds.createNode('multDoubleLinear', n=mdName, skipSelect=True)
-                cmds.connectAttr(bsAttr, mdName + '.input1', f=True)
-
-            if not bsId in poseLibJson['attributes'][attr]['id']:
-                continue
-            index = poseLibJson['attributes'][attr]['id'].index(bsId)
-            poseValue = poseLibJson['attributes'][attr]['value'][index]
-            baseData = getIDValue(dstNs,baseId)
-            baseValue = baseData[attrName]
-            diffValue = poseValue-baseValue
-            cmds.setAttr(mdName + '.input2', diffValue)
-
-            pmaName = brsPrefix + attrName + '_sum'
-            pmaName = pmaName.replace(':', '_')
-            pmaName = pmaName.replace('.', '_')
-            if not cmds.objExists(pmaName):
-                cmds.createNode('plusMinusAverage', n=pmaName, skipSelect=True)
-                if forceConnect:
-                    cmds.connectAttr(pmaName + '.output1D', attrName, f=True)
-                cmds.setAttr(pmaName + '.input1D[{}]'.format(baseId),baseValue)
-            if not cmds.isConnected(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId)):
-                cmds.connectAttr(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId), f=True)
-    
-    # expression link
-    for data in poseDataJson:
-        if data['type'] != 'expression':
-            continue
-        bsId = data['id']
-        bsAttr = srcBs + '.' + data['name']
-
-        cmds.progressBar(gMainProgressBar, edit=True, step=1,
-                         status='Linking Expression To Pose : {} ( total {} attributes )'.format(data['name'],
-                                                                                                 totalAttr))
-
-        for attr in poseLibJson['attributes']:
-            attrName = dstNs + ':' + attr
-
-            if update:  # skip below when update only
-                if not attrName in getObjectAttributeName(cmds.ls(sl=True)):
-                    continue
-
-            mdName = brsPrefix + data['name'] + '_' + attrName + '_mulDou'
-            mdName = mdName.replace('.', '_')
-            mdName = mdName.replace(':', '_')
-            if not cmds.objExists(mdName):
-                cmds.createNode('multDoubleLinear', n=mdName, skipSelect=True)
-                cmds.connectAttr('{}.{}'.format(frConfig, data['name']), mdName + '.input1', f=True)
-
-            if not bsId in poseLibJson['attributes'][attr]['id']:
-                continue
-            index = poseLibJson['attributes'][attr]['id'].index(bsId)
-            poseValue = poseLibJson['attributes'][attr]['value'][index]
-            baseData = getIDValue(dstNs,baseId)
-            baseValue = baseData[attrName]
-            diffValue = poseValue-baseValue
-            cmds.setAttr(mdName + '.input2', diffValue)
-
-            pmaName = brsPrefix + attrName + '_sum'
-            pmaName = pmaName.replace(':', '_')
-            pmaName = pmaName.replace('.', '_')
-            if cmds.objExists(pmaName) and not cmds.isConnected(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId)):
-                cmds.connectAttr(mdName + '.output', pmaName + '.input1D[{}]'.format(bsId), f=True)
-    """
-
-    """
-    emotionList = [data['name'] for data in poseDataJson if data['type'] == 'expression']
-    for emotionName in emotionList:
-        weightFactorName = brsPrefix + emotionName + '_weightFactor'
-        cmds.connectAttr(weightFactorName + '.output', frConfig + '.' + emotionName,
-                         f=True)
-    """
 
     #End Progress
     cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)

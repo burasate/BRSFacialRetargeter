@@ -13,6 +13,11 @@ configJson = json.load(open(configPath))
 """
 Init
 """
+if sys.version[0] == '3':
+    writeMode = 'w'
+else:
+    writeMode = 'wb'
+
 poseData = [
     {
         "id" : "001",
@@ -569,21 +574,20 @@ if __name__ == 'BRSFacialRetargeter.poseData' or 'poseData':
     if os.path.exists(poseDataDir):
         poseDataList = [f for f in os.listdir(poseDataDir)]
         if not 'emotion.json' in poseDataList:
-            outFile = open(emotionPath, 'wb')
+            outFile = open(emotionPath, writeMode)
             json.dump(emotionLib, outFile, sort_keys=True, indent=4)
             outFile.close()
         if not 'mouth.json' in poseDataList:
-            outFile = open(mouthPath, 'wb')
+            outFile = open(mouthPath, writeMode)
             json.dump(mouthLib, outFile, sort_keys=True, indent=4)
             outFile.close()
-        cmds.pause(sec=1)
 
     # Index Checking
     mouth_len_old = len(json.load(open(mouthPath))[0]['weight'])
     mouth_len_new = len(mouthLib[0]['weight'])
     if not mouth_len_old == mouth_len_new:
         os.remove(mouthPath)
-        outFile = open(mouthPath, 'wb')
+        outFile = open(mouthPath, writeMode)
         json.dump(mouthLib, outFile, sort_keys=True, indent=4)
         outFile.close()
         cmds.warning('reset phoneme poses data')
@@ -591,11 +595,10 @@ if __name__ == 'BRSFacialRetargeter.poseData' or 'poseData':
     emotion_len_new = len(emotionLib[0]['weight'])
     if not emotion_len_old == emotion_len_new:
         os.remove(emotionPath)
-        outFile = open(emotionPath, 'wb')
+        outFile = open(emotionPath, writeMode)
         json.dump(emotionLib, outFile, sort_keys=True, indent=4)
         outFile.close()
         cmds.warning('reset emotion poses data')
-
 
 emotionLib = json.load(open(emotionPath))
 mouthLib = json.load(open(mouthPath))
@@ -718,6 +721,6 @@ def setBlendshapePose(targetType, targetName, blend = 0.5, bsName=configJson['sr
             cmds.setAttr('{}.{}'.format(bsName, aliasName),oldValue)
 
     if not getAttribute:
-        outFile = open(wPath, 'wb')
+        outFile = open(wPath, writeMode)
         json.dump(wLibrary, outFile, sort_keys=True, indent=4)
         print('Set Blendshape {} : {}'.format(targetType, targetName))

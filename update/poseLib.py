@@ -15,6 +15,11 @@ import imp
 import poseData
 imp.reload(poseData)
 
+if sys.version[0] == '3':
+    writeMode = 'w'
+else:
+    writeMode = 'wb'
+
 def getSelection(*_):
     selection = cmds.ls(sl=True)
     objectList = []
@@ -133,11 +138,11 @@ def savePoseLibrary(filePath):
 
     # save pose library
     print('\nPose Capture Finish\n')
-    outFile = open(filePath, 'wb')
+    outFile = open(filePath, writeMode)
     json.dump(data, outFile, sort_keys=True, indent=4)
 
     # backup pose library
-    outFile = open(filePath.replace('.json','_Backup.json'), 'wb')
+    outFile = open(filePath.replace('.json','_Backup.json'), writeMode)
     json.dump(data, outFile, sort_keys=True, indent=4)
 
 def loadPoseLibrary(filePath,dstNs):
