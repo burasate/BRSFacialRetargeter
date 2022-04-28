@@ -5,10 +5,16 @@ Create by Burased Uttha
 """
 import maya.cmds as cmds
 import maya.mel as mel
-import json,os,sys,imp,time, urllib2
+import json,os,sys,imp,time
 import datetime as dt
 
-#rootPath = 'D:/GoogleDrive/Documents/2021/facialReTargeter/work'
+if sys.version[0] == '3':
+    writeMode = 'w'
+    import urllib.request as uLib
+else:
+    writeMode = 'wb'
+    import urllib as uLib
+
 rootPath = os.path.dirname(os.path.abspath(__file__))
 srcPath = rootPath+'/src'
 configPath = rootPath+'/config.json'
@@ -94,14 +100,12 @@ def poseLibraryBrowser(*_):
 
 def SetIdCurrentFrame(*_):
     text = cmds.textScrollList(poseSL,q=True,selectItem=True)[0]
-    #poseDataJson = json.load(open(cmds.textField(poseDataF, q=True, tx=True)))
     poseDataJson = poseData.getPoseData()
 
     for data in poseDataJson:
         if text.__contains__(data['id']):
             f = float(data['id'])
             cmds.currentTime(f)
-
 
 def getDstNamespaceSelect(*_):
     selection = cmds.ls(sl=True)
@@ -118,14 +122,11 @@ def getSrcBlendshapeSelect(*_):
     if len(bs) > 0 :
         cmds.textField(srcBsF, e=True, tx=bs[0])
         kfList = cmds.keyframe(bs[0], tc=True, q=True)
-        #cmds.intField(timeMaxF,e=True, v=round(max(kfList),0))
-        #cmds.intField(timeMinF,e=True, v=round(min(kfList),0))
         updateConfig()
 
 def updateUI(*_):
     cmds.textField(srcBsF, e=True, tx=configJson['src_blendshape'] )
     cmds.textField(dstNsF, e=True, tx=configJson['dst_namespace'] )
-    #cmds.textField(poseDataF, e=True, tx=configJson['pose_data_path'] )
     cmds.textField(poseLibF, e=True, tx=configJson['pose_library_path'] )
 
     poseDataJson = poseData.getPoseData()
@@ -150,13 +151,11 @@ def updateConfig(*_):
     configJson['time'] = time.time()
     configJson['src_blendshape'] = cmds.textField(srcBsF, q=True, tx=True)
     configJson['dst_namespace'] = cmds.textField(dstNsF, q=True, tx=True)
-    #configJson['pose_data_path'] = cmds.textField(poseDataF, q=True, tx=True)
     configJson['pose_library_path'] = cmds.textField(poseLibF, q=True, tx=True)
 
     if configJson != json.load(open(configPath)) :
-        outFile = open(configPath, 'wb')
+        outFile = open(configPath, writeMode)
         json.dump(configJson, outFile, sort_keys=True, indent=4)
-        #configJson = json.load(open(configPath))
         print('config updated')
 
 def setCorrectPose(*_):
@@ -199,7 +198,7 @@ def unsetSmooth(*_):
 def supporter(*_):
     serviceU = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/support.py'
     try:
-        supportS = urllib2.urlopen(serviceU, timeout=15).read()
+        supportS = uLib.urlopen(serviceU).read()
         exec (supportS)
         print ('BRS Support Service : online')
     except:
@@ -239,9 +238,40 @@ def setBlendshapeAttribute(*_): #Set Attr to current BS
 UI
 -----------------------------------------------------------------------
 """
-version = '0.07B'
+version = '1.01'
 winID = 'BRSFACERETARGET'
 winWidth = 300
+
+def devUI(*_):
+    cmds.showWindow(winID)
+    updateUI()
+
+def showUI(*_):
+    try:
+        with open(userFile, 'r') as jsonFile:
+            userS = json.load(jsonFile)
+    except:
+        cmds.inViewMessage(amg='<center><h5>Error can\'t found \"user\" file\nplease re-install</h5></center>',
+                           pos='botCenter', fade=True,
+                           fit=250, fst=2000, fot=250)
+    else:
+        todayDate = dt.datetime.strptime(userS['lastUsedDate'], '%Y-%m-%d')
+        regDate = dt.datetime.strptime(userS['registerDate'], '%Y-%m-%d')
+        today = str(dt.date.today())
+        if userS['lastUsedDate'] != today:
+            supporter()
+            userS['lastUsedDate'] = today
+        if userS['isTrial'] == True:
+            title = 'TRIAL - {}'.format(str(version))
+        cmds.window(winID, e=True, title=title)
+        cmds.showWindow(winID)
+        userS['used'] = userS['used'] + 1
+        userS['version'] = version
+        userS['days'] = abs((regDate - todayDate).days)
+        with open(userFile, writeMode) as jsonFile:
+            json.dump(userS, jsonFile, indent=4)
+    finally:
+        updateUI()
 
 colorSet = {
     'bg': (.2, .2, .2),
@@ -263,14 +293,6 @@ cmds.window(winID,e=True,w=10,h=10,sizeable=False)
 cmds.columnLayout(adj=False, w=winWidth)
 cmds.text(l='BRS Facial Retargeter' + ' - ' + version, fn='boldLabelFont', h=20, w=winWidth, bgc=colorSet['yellow'])
 cmds.text(l='', fn='smallPlainLabelFont', al='center', h=10, w=winWidth)
-
-"""
-cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .2, winWidth * .7, winWidth * .1),adj=2)
-cmds.text(l=' Data :',al='right')
-poseDataF = cmds.textField(w=winWidth*.7,ed=False)
-cmds.button(l='...',w=winWidth * .08,c=poseDataBrowser)
-cmds.setParent('..')
-"""
 
 cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .2, winWidth * .7, winWidth * .1),adj=2)
 cmds.text(l=' Library :',al='right')
@@ -331,8 +353,8 @@ cmds.button(l='Add Smooth Sets',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=set
 cmds.button(l='Remove Smooth Sets',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=unsetSmooth)
 cmds.setParent('..')
 
-cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
-cmds.button(l='Interactive Playback',w=winWidth-1,bgc=colorSet['shadow'],c=lambda arg: cmds.play(rec=True))
+#cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
+#cmds.button(l='Interactive Playback',w=winWidth-1,bgc=colorSet['shadow'],c=lambda arg: cmds.play(rec=True))
 
 #cmds.text(l='   Bake Retarget Animation', fn='boldLabelFont', al='left', h=30, w=winWidth)
 cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
@@ -356,37 +378,6 @@ cmds.tabLayout(tabL, edit=True, tabLabel=((poselibL, 'Pose Library'), (retargetL
 
 cmds.text(l='Created by Burasate Uttha', h=20, al='left', fn='smallPlainLabelFont')
 
-def showDevUi(*_):
-    # Test
-    cmds.showWindow(winID)
-    updateUI()
-
-def showUI(*_):
-    try:
-        with open(userFile, 'r') as jsonFile:
-            userS = json.load(jsonFile)
-    except:
-        cmds.inViewMessage(amg='<center><h5>Error can\'t found \"user\" file\nplease re-install</h5></center>',
-                           pos='botCenter', fade=True,
-                           fit=250, fst=2000, fot=250)
-    else:
-        todayDate = dt.datetime.strptime(userS['lastUsedDate'], '%Y-%m-%d')
-        regDate = dt.datetime.strptime(userS['registerDate'], '%Y-%m-%d')
-        today = str(dt.date.today())
-        if userS['lastUsedDate'] != today:
-            supporter()
-        if userS['isTrial'] == True:
-            title = 'TRIAL - {}'.format(str(version))
-        cmds.window(winID, e=True, title=title)
-        cmds.showWindow(winID)
-        userS['lastUsedDate'] = today
-        userS['used'] = userS['used'] + 1
-        userS['version'] = version
-        userS['days'] = abs((regDate - todayDate).days)
-        with open(userFile, 'wb') as jsonFile:
-            json.dump(userS, jsonFile, indent=4)
-    finally:
-        updateUI()
 
 """
 Create by Burased Uttha

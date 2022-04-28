@@ -3,8 +3,13 @@ BRS FACIAL RETARGETER UPDATER
 """
 from maya import cmds
 from maya import mel
-import os, json, urllib2, getpass
+import os, json, getpass
 import datetime as dt
+
+if sys.version[0] == '3':
+    import urllib.request as uLib
+else:
+    import urllib as uLib
 
 def formatPath(path):
     path = path.replace("/", os.sep)
@@ -24,7 +29,8 @@ userFile = formatPath(projectDir + os.sep + 'user')
 #"""
 # Update
 updateListURL = 'https://raw.githubusercontent.com/burasate/BRSFacialRetargeter/main/service/update.json'
-updateFilePath = urllib2.urlopen(updateListURL, timeout=30).read()
+#updateFilePath = urllib2.urlopen(updateListURL, timeout=30).read()
+updateFilePath = uLib.urlopen(updateListURL).readlines()
 fileNameSet = json.loads(updateFilePath)
 
 gMainProgressBar = mel.eval('$tmp = $gMainProgressBar')
@@ -48,9 +54,14 @@ for file in fileNameSet:
                            button=['OK'])
     else:
         mainReader = open(projectDir + os.sep + file, 'r').readlines()
-        mainWriter = open(projectDir + os.sep + file, 'w')
+        #mainWriter = open(projectDir + os.sep + file, 'w')
+        if sys.version[0] == '3':
+            mainWriter = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'wb')
+        else:
+            mainWriter = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'w')
         try:
-            urlReader = urllib2.urlopen(url, timeout=60).readlines()
+            #urlReader = urllib2.urlopen(url, timeout=60).readlines()
+            urlReader = uLib.urlopen(url).readlines()
             mainWriter.writelines(urlReader)
             mainWriter.close()
             #print('{} was loaded'.format(file.replace('.py', '').capitalize()))

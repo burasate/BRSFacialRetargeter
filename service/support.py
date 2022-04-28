@@ -5,12 +5,19 @@ SUPPORTING SCRIPT
 ---------------------
 """
 
-import json, getpass, os, time,urllib,os,sys
+import json, getpass, os, time,os,sys
 from time import gmtime, strftime
 import datetime as dt
 from maya import mel
 import maya.cmds as cmds
+import urllib.parse
 
+if sys.version[0] == '3':
+    writeMode = 'w'
+    import urllib.request as uLib
+else:
+    writeMode = 'wb'
+    import urllib as uLib
 
 def formatPath(path):
     import os
@@ -22,7 +29,6 @@ mayaAppDir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
 scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
 projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
 userFile = formatPath(projectDir + os.sep + 'user')
-
 
 filepath = cmds.file(q=True, sn=True)
 filename = os.path.basename(filepath)
@@ -44,7 +50,7 @@ data = {
     'email' : userData['email'],
     'user' : getpass.getuser(),
     'maya' : str(cmds.about(version=True)),
-    'ip' : str(urllib2.urlopen('http://v4.ident.me', timeout=5).read().decode('utf8')),
+    'ip' : str(uLib.urlopen('http://v4.ident.me', timeout=5).read().decode('utf8')),
     'version' : userData['version'],
     'scene' : raw_name,
     'timeUnit' : cmds.currentUnit(q=True, t=True),
@@ -63,17 +69,25 @@ data = {
 }
 
 url = 'https://hook.integromat.com/gnjcww5lcvgjhn9lpke8v255q6seov35'
-params = urllib.urlencode(data)
-conn = urllib.urlopen('{}?{}'.format(url, params))
-print(conn.read())
-#print(conn.info())
+if sys.version[0] == '3':
+    params = urllib.parse.urlencode(data)
+    conn = uLib.urlopen('{}?{}'.format(url, params))
+    print(conn.read())
+    # print(conn.info())
+else:
+    params = uLib.urlencode(data)
+    conn = uLib.urlopen('{}?{}'.format(url, params))
+    print(conn.read())
+    #print(conn.info())
 
 
 # Supporter Coding
+"""
 # poseData.py
 if not os.path.exists(projectDir+os.sep+'poseData.py'):
     with open(projectDir+os.sep+'poseData.py', 'w') as fp:
         pass
+"""
 
 #Auto Update
 try:
@@ -188,7 +202,7 @@ new_rtg_attr = [
         }
     ]
 configJson['rtg_attr'] = new_rtg_attr
-outFile = open(configPath, 'wb')
+outFile = open(configPath, writeMode)
 json.dump(configJson, outFile, sort_keys=True, indent=4)
 
 # Rename brsFR_config
