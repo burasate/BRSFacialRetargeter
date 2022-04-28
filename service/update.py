@@ -64,7 +64,7 @@ for file in fileNameSet:
             urlReader = uLib.urlopen(url).readlines()
             mainWriter.writelines(urlReader)
             mainWriter.close()
-            print('{} was loaded'.format(file.replace('.py', '').capitalize()))
+            #print('{} was loaded'.format(file.replace('.py', '').capitalize()))
         except:
             mainWriter.writelines(mainReader)
             mainWriter.close()
