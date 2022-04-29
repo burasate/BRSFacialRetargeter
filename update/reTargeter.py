@@ -1,7 +1,7 @@
 """
 BRSFR FACE RETARGETER
 """
-import json, os
+import json, os, sys
 import maya.cmds as cmds
 import maya.mel as mel
 

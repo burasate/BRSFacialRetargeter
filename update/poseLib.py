@@ -3,7 +3,7 @@ POSE LIBRARY CAPTURE
 reference
 https://melindaozel.com/FACS-cheat-sheet/?fbclid=IwAR0y0MfuAg1GdXVPrhKZVckFEvMHoejOHdYpaRINS8Lobs2bNNAGJUk-RSU
 """
-import json, os, time
+import json, os, time, sys
 import maya.cmds as cmds
 import maya.mel as mel
 

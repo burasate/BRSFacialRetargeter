@@ -1,7 +1,7 @@
 """
 BRSFR FACE UPDATER
 """
-import json, os, time, random
+import json, os, time, random, sys
 import maya.cmds as cmds
 import maya.mel as mel
 

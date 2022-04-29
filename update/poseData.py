@@ -2,7 +2,7 @@
 POSE DATA
 """
 
-import json, os, time
+import json, os, time, sys
 import maya.cmds as cmds
 import maya.mel as mel
 

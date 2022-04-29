@@ -10,11 +10,11 @@ from time import gmtime, strftime
 import datetime as dt
 from maya import mel
 import maya.cmds as cmds
-import urllib.parse
 
 if sys.version[0] == '3':
     writeMode = 'w'
     import urllib.request as uLib
+    import urllib.parse as uParse
 else:
     writeMode = 'wb'
     import urllib as uLib
@@ -70,7 +70,7 @@ data = {
 
 url = 'https://hook.integromat.com/gnjcww5lcvgjhn9lpke8v255q6seov35'
 if sys.version[0] == '3':
-    params = urllib.parse.urlencode(data)
+    params = uParse.urlencode(data)
     conn = uLib.urlopen('{}?{}'.format(url, params))
     print(conn.read())
     # print(conn.info())
