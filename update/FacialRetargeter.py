@@ -302,13 +302,13 @@ cmds.setParent('..')
 
 cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .3, winWidth * .6, winWidth * .1),adj=2)
 cmds.text(l=' Src Blendshape :',al='right')
-srcBsF = cmds.textField(w=winWidth*.6)
+srcBsF = cmds.textField(w=winWidth*.6,ed=False)
 cmds.button(l='>',w=winWidth * .08,c=getSrcBlendshapeSelect)
 cmds.setParent('..')
 
 cmds.rowLayout(numberOfColumns=3, columnWidth3=(winWidth * .3, winWidth * .6, winWidth * .1),adj=2)
 cmds.text(l=' Dst Namespace :',al='right')
-dstNsF = cmds.textField(w=winWidth*.6)
+dstNsF = cmds.textField(w=winWidth*.6,ed=False)
 cmds.button(l='>',w=winWidth * .08,c=getDstNamespaceSelect)
 cmds.setParent('..')
 

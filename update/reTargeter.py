@@ -175,7 +175,7 @@ def BRSFaceRetargeter(srcBlendshape,dstNamespace,libraryPath,frameMin,frameMax):
         cmds.currentTime(f)
     print('Blendshape to Pose Retarget is Done   {}F - {}F'.format(frameMin,frameMax))
 
-def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=0.65): #Correct Pose For One Attribute
+def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=0.75): #Correct Pose For One Attribute
     poseLibJson = json.load(open(configJson['pose_library_path']))
     curFrame = cmds.currentTime(q=True)
     #print('frame = {}'.format(curFrame))
