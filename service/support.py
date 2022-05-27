@@ -98,6 +98,7 @@ except:
 
 # Config
 configPath = projectDir+'/config.json'
+print(configPath)
 configJson = json.load(open(configPath))
 
 new_rtg_attr = [
