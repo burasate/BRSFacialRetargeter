@@ -50,7 +50,7 @@ data = {
     'email' : userData['email'],
     'user' : getpass.getuser(),
     'maya' : str(cmds.about(version=True)),
-    'ip' : str(uLib.urlopen('http://v4.ident.me', timeout=5).read().decode('utf8')),
+    'ip' : str(uLib.urlopen('http://v4.ident.me').read().decode('utf8')),
     'version' : userData['version'],
     'scene' : raw_name,
     'timeUnit' : cmds.currentUnit(q=True, t=True),
