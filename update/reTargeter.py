@@ -293,7 +293,7 @@ def updatePoseLibSelection(*_):
                 continue
     RetargetLink(update=True)
     updater.setRetargetAttribute()
-    print ('Update Retarget Link Finish')
+    print ('Update Retarget Link Finish\n'),
 
 def clearBake(*_):
     poseLibJson = json.load(open(configJson['pose_library_path']))
@@ -832,7 +832,7 @@ def RetargetLink(forceConnect=False,update=False):
 
     #End Progress
     cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
-    print('Retarget Link Finish')
+    print('Retarget Link Finish\n'),
 
 def bakeRetarget(*_):
     poseDataJson = poseData.getPoseData()
