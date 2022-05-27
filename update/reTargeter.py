@@ -177,6 +177,7 @@ def BRSFaceRetargeter(srcBlendshape,dstNamespace,libraryPath,frameMin,frameMax):
 
 def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=0.75): #Correct Pose For One Attribute
     poseLibJson = json.load(open(configJson['pose_library_path']))
+    poseDataJson = poseData.getPoseData()
     curFrame = cmds.currentTime(q=True)
     #print('frame = {}'.format(curFrame))
 
@@ -190,6 +191,7 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
 
     #get current bs attr
     srcBsData = getSrcBsData(srcBlendshape,[curFrame,curFrame+1])
+    #print(srcBsData)
 
     pmaName = brsPrefix + attrName + '_sum'
     pmaName = pmaName.replace(':', '_').replace('.', '_')
@@ -206,6 +208,7 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
     bsData = {
         'id' : [],
         'value' : [],
+        'sets' : [],
     }
     for bsId in srcBsData:
         index = srcBsData[bsId]['frame'].index(curFrame)
@@ -222,7 +225,10 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
             continue
         bsData['id'].append(bsId)
         bsData['value'].append(bsValue)
+        setsName = [poseDataJson[i]['sets'] for i in range(len(poseDataJson)) if poseDataJson[i]['id'] == bsId][0]
+        bsData['sets'].append(setsName)
 
+    print(bsData)
     oldValue = 0.0
     newValue = 0.0
     #split value by value/sum ratio

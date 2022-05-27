@@ -86,41 +86,51 @@ def savePoseLibrary(filePath):
             data['attributes'][attr]['id'].append(str(frame))
             data['attributes'][attr]['value'].append(value)
             if dataP['id'] == "001": # is Base
-                data['pose_attribute'][attr] = round(value, 4)
+                data['pose_attribute'][attr] = round(value, 6)
 
             # print('id (frame)  {}     {}  =  {}'.format(frame, fullAttrName, value))
 
     # share sets value
     setsList = [d['sets'] for d in poseDataJson]
     idList = [int(d['id']) for d in poseDataJson]
+    zip_setsId = zip(idList,setsList)
     for attr in data['attributes']:
+        effectiveList = []
         valueDict = {}
         for i in range(len(idList)):
             s = setsList[i]
             if not s in valueDict:
                 valueDict[s] = []
             v = data['attributes'][attr]['value'][i]
-            v = round(v,4)
+            v = round(v,6)
             valueDict[s].append(v)
         #print(attr, valueDict)
 
         for s in valueDict:
             avg = sum(valueDict[s])/len(valueDict[s])
-            rate = 0.005
+            rate = 0.00001
             shareRate = avg * rate
-            shareRate = round(shareRate, 6)
             #print('shareRate', s,shareRate)
 
+            value_base = data['attributes'][attr]['value'][0] # value from base pose
             for i in range(len(idList)):
-                if setsList[i] == s:
+                value_id = data['attributes'][attr]['value'][i]
+                if (setsList[i] == s) and (value_base != value_id):
                     new_v = data['attributes'][attr]['value'][i] + shareRate
                     data['attributes'][attr]['value'][i] = new_v
-                    data['attributes'][attr]['value'][i]
+                    #if 'jaw_ctrl' in attr: # for testing
+                        #print(attr, 'setsList[{}] == {}'.format(i,s), setsList[i] == s, zip_setsId[i])
+                    if not s in effectiveList: # for report effective
+                        effectiveList.append(s)
+        #report effective with
+        if effectiveList != []:
+            print('{} effect with {}'.format(attr, effectiveList))
+                        
 
 
     # delete useless attribute
     delAttrList = []
-    print (len(data['attributes']))
+    print ('before cleanup attr', len(data['attributes']))
     for attr in data['attributes']:
         minValue = min(data['attributes'][attr]['value'])
         maxValue = max(data['attributes'][attr]['value'])
@@ -128,7 +138,7 @@ def savePoseLibrary(filePath):
             delAttrList.append(attr)
     for attr in delAttrList:
         del data['attributes'][attr]
-    print (len(data['attributes']))
+    print ('after cleanup attr', len(data['attributes']))
 
     """
     # get min / max value
