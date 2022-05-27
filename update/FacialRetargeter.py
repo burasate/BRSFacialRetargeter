@@ -20,11 +20,10 @@ srcPath = rootPath+'/src'
 configPath = rootPath+'/config.json'
 configJson = json.load(open(configPath))
 
-"""
------------------------------------------------------------------------
-Init
------------------------------------------------------------------------
-"""
+#-----------------------------------------------------------------------
+#Init
+#-----------------------------------------------------------------------
+
 if not rootPath in sys.path:
     sys.path.insert(0,rootPath)
     print(rootPath)
@@ -37,6 +36,10 @@ imp.reload(reTargeter)
 imp.reload(poseLib)
 imp.reload(updater)
 imp.reload(poseData)
+try:
+    cmds.loadPlugin( 'lookdevKit.mll' )
+except:
+    pass
 
 def formatPath(path):
     path = path.replace("/", os.sep)
@@ -48,11 +51,10 @@ scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
 projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
 userFile = formatPath(projectDir + os.sep + 'user')
 
-"""
------------------------------------------------------------------------
-Func
------------------------------------------------------------------------
-"""
+#-----------------------------------------------------------------------
+#Function
+#------------------------------------------------------------------------------------------------------------------------------------------
+
 def savePoseLib(*_):
     imp.reload(poseLib)
     result = cmds.fileDialog(mode=1,dm=rootPath + os.sep + 'poseLib' + os.sep + '*.json')
@@ -233,18 +235,18 @@ def setBlendshapeAttribute(*_): #Set Attr to current BS
         reTargeter.autoMouthLink(update=True)
 
 
-"""
------------------------------------------------------------------------
-UI
------------------------------------------------------------------------
-"""
-version = '1.01'
+#-----------------------------------------------------------------------
+#UI
+#-----------------------------------------------------------------------
+version = '1.02'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
+"""
 def devUI(*_):
     cmds.showWindow(winID)
     updateUI()
+"""
 
 def showUI(*_):
     try:

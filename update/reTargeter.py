@@ -201,7 +201,7 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
     diffValue = targetValue - result
     #print('difference value = {}'.format(diffValue))
     if diffValue == 0.0:
-        print('skip {} because value not change'.format(attrName))
+        #print('skip {} because value not change'.format(attrName))
         return None
 
     #bsData Normalization
@@ -228,7 +228,6 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         setsName = [poseDataJson[i]['sets'] for i in range(len(poseDataJson)) if poseDataJson[i]['id'] == bsId][0]
         bsData['sets'].append(setsName)
 
-    print(bsData)
     oldValue = 0.0
     newValue = 0.0
     #split value by value/sum ratio
@@ -263,7 +262,8 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
     # save update pose library
     outFile = open(libraryPath, writeMode)
     json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
-    print('{} Updated in Pose Library  {}  to  {}'.format(attrName,round(oldValue,4),round(newValue,4)))
+    print('{} Updated in Pose Library  {}  to  {}\n'.format(attrName,round(oldValue,4),round(newValue,4))),
+
 
 def updatePoseLibSelection(*_):
     poseLibJson = json.load(open(configJson['pose_library_path']))
