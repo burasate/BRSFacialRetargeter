@@ -264,7 +264,6 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
     json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
     print('{} Updated in Pose Library  {}  to  {}\n'.format(attrName,round(oldValue,4),round(newValue,4))),
 
-
 def updatePoseLibSelection(*_):
     poseLibJson = json.load(open(configJson['pose_library_path']))
     dstNs = configJson['dst_namespace']
@@ -809,6 +808,9 @@ def RetargetLink(forceConnect=False,update=False):
     srcBs = configJson['src_blendshape']
     dstNs = configJson['dst_namespace']
     baseId = '001'
+
+    if not cmds.objExists(srcBs):
+        cmds.error('\ncan\'t found source blendshape, please check.\n')
 
     clearBake()
 
