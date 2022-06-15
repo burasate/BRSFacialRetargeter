@@ -22,7 +22,7 @@ poseData = [
     {
         "id" : "001",
         "name" : "base",
-        "sets" : "all",
+        "sets" : "base",
         "type" : "base"
     },
     {
