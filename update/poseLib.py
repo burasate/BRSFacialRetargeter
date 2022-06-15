@@ -106,26 +106,32 @@ def savePoseLibrary(filePath):
             valueDict[s].append(v)
         #print(attr, valueDict)
 
+        setAvg = {}
         for s in valueDict:
             avg = sum(valueDict[s])/len(valueDict[s])
             rate = 0.025
             shareRate = avg * rate
+            setAvg[s] = shareRate
             #print('shareRate', s,shareRate)
-            print('average', sum(valueDict[s]),len(valueDict[s]), avg)
+            print('average', s, sum(valueDict[s]),len(valueDict[s]), avg)
 
             value_base = data['attributes'][attr]['value'][0] # value from base pose
             for i in range(len(idList)):
                 value_id = data['attributes'][attr]['value'][i]
                 if (setsList[i] == s) and (value_base != value_id):
-                    new_v = data['attributes'][attr]['value'][i] + shareRate
-                    data['attributes'][attr]['value'][i] = new_v
-                    #if 'jaw_ctrl' in attr: # for testing
+                    #new_v = data['attributes'][attr]['value'][i] + shareRate
+                    #data['attributes'][attr]['value'][i] = new_v
+                    #if 'CTRL_C_mouth' in attr: # for testing
                         #print(attr, 'setsList[{}] == {}'.format(i,s), setsList[i] == s, zip_setsId[i])
                     if not s in effectiveList: # for report effective
                         effectiveList.append(s)
+                shareRate_avg = [setAvg[s] for s in setAvg if s in effectiveList]
+                print(shareRate_avg)
+                shareRate_avg = sum(shareRate_avg)/len(shareRate_avg)
+                print(shareRate_avg)
         #report effective with
         if effectiveList != []:
-            print('{} effect with {}  Share Rate {} x {} = {}'.format(attr, effectiveList, avg, rate, shareRate))
+            print('{} effect with {}  Share Rate {} x {} = {}\n'.format(attr, effectiveList, avg, rate, shareRate)),
                         
 
 
