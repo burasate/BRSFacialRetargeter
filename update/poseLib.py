@@ -111,6 +111,7 @@ def savePoseLibrary(filePath):
             rate = 0.025
             shareRate = avg * rate
             #print('shareRate', s,shareRate)
+            print('average', sum(valueDict[s]),len(valueDict[s]), avg)
 
             value_base = data['attributes'][attr]['value'][0] # value from base pose
             for i in range(len(idList)):
