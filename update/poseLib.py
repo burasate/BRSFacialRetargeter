@@ -108,7 +108,7 @@ def savePoseLibrary(filePath):
 
         for s in valueDict:
             avg = sum(valueDict[s])/len(valueDict[s])
-            rate = 0.00001
+            rate = 0.025
             shareRate = avg * rate
             #print('shareRate', s,shareRate)
 
@@ -124,7 +124,7 @@ def savePoseLibrary(filePath):
                         effectiveList.append(s)
         #report effective with
         if effectiveList != []:
-            print('{} effect with {}'.format(attr, effectiveList))
+            print('{} effect with {}  Share Rate {} x {} = {}'.format(attr, effectiveList, avg, rate, shareRate))
                         
 
 
