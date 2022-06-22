@@ -56,9 +56,9 @@ for file in fileNameSet:
         mainReader = open(projectDir + os.sep + file, 'r').readlines()
         #mainWriter = open(projectDir + os.sep + file, 'w')
         if sys.version[0] == '3':
-            mainWriter = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'wb')
+            mainWriter = open(projectDir + os.sep + file, 'wb')
         else:
-            mainWriter = open(projectDir + os.sep + 'BRSLocDelaySystem.py', 'w')
+            mainWriter = open(projectDir + os.sep + file, 'w')
         try:
             #urlReader = urllib2.urlopen(url, timeout=60).readlines()
             urlReader = uLib.urlopen(url).readlines()
