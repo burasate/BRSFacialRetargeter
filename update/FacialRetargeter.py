@@ -77,7 +77,6 @@ def createPoselib(*_):
         updateConfig()
 
 def loadPoselib(*_):
-    retargetClear()
     poseLibPath = cmds.textField(poseLibF, q=True, tx=True)
     dstNs = cmds.textField(dstNsF, q=True, tx=True)
 
@@ -165,25 +164,33 @@ def setCorrectPose(*_):
     global configJson
     configJson = json.load(open(configPath))
 
-    reTargeter.updatePoseLibSelection()
+    result = cmds.confirmDialog(message='Set Correct Pose?', button=['Yes', 'No'], defaultButton='Yes',
+                                cancelButton='No', dismissString='No', title='BRS FR')
+    if result == 'Yes':
+        reTargeter.updatePoseLibSelection()
 
 def doRetarget(*_):
     imp.reload(reTargeter)
     global configJson
     configJson = json.load(open(configPath))
-
-    try:
-        cmds.refresh(suspend=True)
-        reTargeter.RetargetLink()
-    except IOError as e:
-        print(e.errno)
-        print(e)
-    finally:
-        cmds.refresh(suspend=False)
+    result = cmds.confirmDialog(message='Retarget Link?', button=['Yes', 'No'], defaultButton='Yes',
+                                cancelButton='No', dismissString='No', title='BRS FR')
+    if result == 'Yes':
+        try:
+            cmds.refresh(suspend=True)
+            reTargeter.RetargetLink()
+        except IOError as e:
+            print(e.errno)
+            print(e)
+        finally:
+            cmds.refresh(suspend=False)
 
 def retargetClear(*_):
     imp.reload(reTargeter)
-    reTargeter.clearLink()
+    result = cmds.confirmDialog(message='Clear Retarget Link?', button=['Yes', 'No'], defaultButton='Yes',
+                       cancelButton='No', dismissString='No', title='BRS FR')
+    if result == 'Yes':
+        reTargeter.clearLink()
 
 def doBakeRetarget(*_):
     imp.reload(reTargeter)
@@ -238,7 +245,7 @@ def setBlendshapeAttribute(*_): #Set Attr to current BS
 #-----------------------------------------------------------------------
 #UI
 #-----------------------------------------------------------------------
-version = '1.03'
+version = '1.04'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
@@ -330,8 +337,8 @@ cmds.button(l='Load',w=(winWidth/2)-1.33,bgc=colorSet['shadow'], c=loadPoselib)
 cmds.button(l='Save',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=savePoseLib)
 cmds.setParent('..')
 
-cmds.text(l='\n    How to ?\n', al='center', fn='smallPlainLabelFont')
-cmds.text(l='    1. set base pose\n    2. create pose library\n    3. double click on list to set pose\n', al='left', fn='smallPlainLabelFont')
+#cmds.text(l='\n    How to ?\n', al='center', fn='smallPlainLabelFont')
+#cmds.text(l='    1. set base pose\n    2. create pose library\n    3. double click on list to set pose\n', al='left', fn='smallPlainLabelFont')
 
 cmds.setParent( '..' ) #end poselibL
 
@@ -344,22 +351,21 @@ cmds.button(l='Create Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=doRetar
 cmds.button(l='Clear Link',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=retargetClear)
 cmds.setParent('..')
 
-cmds.text(l='Pose Correction', fn='boldLabelFont', al='center', h=30, w=winWidth)
-
-#cmds.text(l='Pose Correction', fn='boldLabelFont', al='left', h=15, w=winWidth)
+#cmds.text(l='Pose Correction', fn='boldLabelFont', al='center', h=30, w=winWidth)
 cmds.button(l='Correct Pose Selection',w=winWidth-1,bgc=colorSet['shadow'], h=30,c=setCorrectPose)
 
-#cmds.text(l='   Smooth Selection', fn='boldLabelFont', al='left', h=30, w=winWidth)
+cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
+cmds.text(l='   Smooth Sets', fn='boldLabelFont', al='center', h=30, w=winWidth)
 cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1.33))
-cmds.button(l='Add Smooth Sets',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=setSmooth)
-cmds.button(l='Remove Smooth Sets',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=unsetSmooth)
+cmds.button(l='Add',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=setSmooth)
+cmds.button(l='Remove',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=unsetSmooth)
 cmds.setParent('..')
 
 #cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
 #cmds.button(l='Interactive Playback',w=winWidth-1,bgc=colorSet['shadow'],c=lambda arg: cmds.play(rec=True))
 
 #cmds.text(l='   Bake Retarget Animation', fn='boldLabelFont', al='left', h=30, w=winWidth)
-cmds.text(l='', fn='boldLabelFont', al='left', h=15, w=winWidth)
+cmds.text(l='', fn='boldLabelFont', al='left', h=25, w=winWidth)
 cmds.button(l='Bake Animation',w=winWidth-1,bgc=colorSet['shadow'],c=doBakeRetarget)
 
 cmds.setParent( '..' ) #end retargetL

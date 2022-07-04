@@ -172,6 +172,7 @@ def savePoseLibrary(filePath):
 def loadPoseLibrary(filePath,dstNs):
     poseLibJson = json.load(open(configJson['pose_library_path']))
 
+    sel = []
     for attr in poseLibJson['attributes']:
         attrName = '{}:{}'.format(dstNs,attr)
         if not cmds.objExists(attrName):
@@ -182,6 +183,9 @@ def loadPoseLibrary(filePath,dstNs):
             index = poseLibJson['attributes'][attr]['id'].index(f)
             value = poseLibJson['attributes'][attr]['value'][index]
             cmds.setKeyframe(attrName, t=f, v=value)
+        sel.append(attrName)
+    sel = list(set([i.split('.')[0] for i in sel]))
+    cmds.select(sel)
 
 def createPoseLibrary(filePath):
     poseDataJson = poseData.getPoseData()
