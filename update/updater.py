@@ -98,6 +98,8 @@ def setRetargetAttribute(*_): #Main Update
         attrName = dstNs + ':' + attr
         if not cmds.objExists(attrName):
             continue
+        if type(cmds.getAttr(attrName)) == list:
+            continue
         pmaName = brsPrefix + attrName + '_sum'
         pmaName = pmaName.replace(':', '_').replace('.', '_')
         objName = '{}:{}'.format(dstNs, attr.split('.')[0])
@@ -114,7 +116,7 @@ def setRetargetAttribute(*_): #Main Update
         if cmds.objExists(pmaName):
             prevValue = cmds.getAttr(attrName)
             newValue = cmds.getAttr(pmaName + '.output1D')
-            if cmds.getAttr(attrName) != newValue and cmds.getAttr(attrName, settable=True)[0]:
+            if cmds.getAttr(attrName) != newValue and cmds.getAttr(attrName, settable=True):
                 if objName in smoothSetsList:
                     sm = 1 - cmds.getAttr('{}.{}'.format(frConfig, 'smoothness'))
                     v = lerp(prevValue, newValue, sm)
@@ -131,6 +133,8 @@ def setRetargetAttribute(*_): #Main Update
         rsAttr = [attr for attr in list(poseLibJson['pose_attribute']) if attr not in attrList]
         for attr in rsAttr:
             attrName = dstNs + ':' + attr
+            if type(cmds.getAttr(attrName)) == list:
+                continue
             v = poseLibJson['pose_attribute'][attr]
             if not cmds.objExists(attrName):
                 continue
