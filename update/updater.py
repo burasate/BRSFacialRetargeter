@@ -114,7 +114,7 @@ def setRetargetAttribute(*_): #Main Update
         if cmds.objExists(pmaName):
             prevValue = cmds.getAttr(attrName)
             newValue = cmds.getAttr(pmaName + '.output1D')
-            if cmds.getAttr(attrName) != newValue and not cmds.getAttr(attrName, lock=True):
+            if cmds.getAttr(attrName) != newValue and cmds.getAttr(attrName, settable=True)[0]:
                 if objName in smoothSetsList:
                     sm = 1 - cmds.getAttr('{}.{}'.format(frConfig, 'smoothness'))
                     v = lerp(prevValue, newValue, sm)
@@ -136,6 +136,7 @@ def setRetargetAttribute(*_): #Main Update
                 continue
             if cmds.getAttr(attrName) != v:
                 cmds.setAttr(attrName, v, clamp=True)
+                cmds.cutKey(attrName)
 
     #After Update
     prevTime = time.time()
