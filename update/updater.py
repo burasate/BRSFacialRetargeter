@@ -135,6 +135,8 @@ def setRetargetAttribute(*_): #Main Update
             attrName = dstNs + ':' + attr
             if type(cmds.getAttr(attrName)) == list:
                 continue
+            if not cmds.getAttr(attrName, se=True):
+                continue
             v = poseLibJson['pose_attribute'][attr]
             if not cmds.objExists(attrName):
                 continue
