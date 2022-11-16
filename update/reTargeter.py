@@ -1,7 +1,7 @@
 """
 BRSFR FACE RETARGETER
 """
-import json, os, sys
+import json, os, sys, time
 import maya.cmds as cmds
 import maya.mel as mel
 
@@ -260,9 +260,13 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         newValue = poseValue_new
 
     # save update pose library
-    outFile = open(libraryPath, writeMode)
-    json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
-    print('{} Updated in Pose Library  {}  to  {}\n'.format(attrName,round(oldValue,4),round(newValue,4))),
+    time_st = time.time()
+    with open(libraryPath, 'w') as outFile:
+        #outFile = open(libraryPath, writeMode)
+        json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
+        outFile.close()
+        time_dur = round(time.time() - time_st, 2)
+        print('{} Updated in Pose Library  {}  to  {} / {} sec\n'.format(attrName,round(oldValue,4),round(newValue,4),time_dur)),
 
 def updatePoseLibSelection(*_):
     poseLibJson = json.load(open(configJson['pose_library_path']))
