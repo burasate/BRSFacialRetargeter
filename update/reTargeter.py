@@ -21,7 +21,7 @@ imp.reload(poseData)
 if sys.version[0] == '3':
     writeMode = 'w'
 else:
-    writeMode = 'wb'
+    writeMode = 'w'
 
 def reloadConfig(*_):
     global configJson
@@ -29,7 +29,16 @@ def reloadConfig(*_):
 
 def getIDValue(nameSpace,id):
     poseLibJson = json.load(open(configJson['pose_library_path']))
+
+    attr_list = [attr for attr in poseLibJson['attributes'] if id in poseLibJson['attributes'][attr]['id']]
+    dstAttr_list = ['{}:{}'.format(nameSpace, attr) for attr in attr_list]
+    index_list = [poseLibJson['attributes'][attr]['id'].index(id) for attr in attr_list]
+    dstValue_list = [poseLibJson['attributes'][attr]['value'][i] for i,attr in zip(index_list,attr_list)]
+
     data = {}
+    for dstAttr,dstValue in zip(dstAttr_list,dstValue_list):
+        data[dstAttr] = dstValue
+    '''
     for attr in poseLibJson['attributes']:
         if not id in poseLibJson['attributes'][attr]['id']:
             continue
@@ -38,6 +47,7 @@ def getIDValue(nameSpace,id):
         dstValue = poseLibJson['attributes'][attr]['value'][index]
 
         data[dstAttr] = dstValue
+    '''
     return data
 
 def getObjectAttributeName(objects):
@@ -106,7 +116,6 @@ def getSrcBsData(srcBlendshape,frameList):
 def getResultData(dstNamespace,srcBsData,frame,baseId='001'):
     # create result data
     resultData = getIDValue(nameSpace=dstNamespace,id=baseId)
-
     for bsId in srcBsData:
         #print('\nid   {}   shape name   {}\n'.format(bsId, srcBsData[bsId]['name']))
         index = srcBsData[bsId]['frame'].index(frame)
@@ -210,11 +219,11 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         'value' : [],
         'sets' : [],
     }
-    for bsId in srcBsData:
+    baseData = getIDValue(nameSpace=dstNamespace, id=baseId)
+    for bsId in sorted(list(srcBsData)):
         index = srcBsData[bsId]['frame'].index(curFrame)
         bsValue = srcBsData[bsId]['value'][index]
         poseLibData = getIDValue(nameSpace=dstNamespace,id=bsId)
-        baseData = getIDValue(nameSpace=dstNamespace,id=baseId)
         if not attrName in poseLibData:
             continue
         poseValue = poseLibData[attrName]
@@ -228,9 +237,8 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         setsName = [poseDataJson[i]['sets'] for i in range(len(poseDataJson)) if poseDataJson[i]['id'] == bsId][0]
         bsData['sets'].append(setsName)
 
-    oldValue = 0.0
-    newValue = 0.0
     #split value by value/sum ratio
+    oldValue,newValue = (0.00,0.00)
     for i in range(len(bsData['value'])):
         #print('\n')
         bsId = bsData['id'][i]
@@ -260,13 +268,11 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         newValue = poseValue_new
 
     # save update pose library
-    time_st = time.time()
     with open(libraryPath, 'w') as outFile:
         #outFile = open(libraryPath, writeMode)
         json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
         outFile.close()
-        time_dur = round(time.time() - time_st, 2)
-        print('{} Updated in Pose Library  {}  to  {} / {} sec\n'.format(attrName,round(oldValue,4),round(newValue,4),time_dur)),
+        print('{} Updated in Pose Library  {}  to  {}\n'.format(attrName,round(oldValue,4),round(newValue,4))),
 
 def updatePoseLibSelection(*_):
     poseLibJson = json.load(open(configJson['pose_library_path']))

@@ -245,7 +245,7 @@ def setBlendshapeAttribute(*_): #Set Attr to current BS
 #-----------------------------------------------------------------------
 #UI
 #-----------------------------------------------------------------------
-version = '1.06'
+version = '1.07'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
