@@ -49,7 +49,6 @@ def getSelection(*_):
     }
 
 def savePoseLibrary(filePath):
-
     poseDataJson = poseData.getPoseData()
     selectData = getSelection()
 
@@ -154,20 +153,16 @@ def savePoseLibrary(filePath):
         del data['attributes'][attr]
     print ('after cleanup attr', len(data['attributes']))
 
-    """
-    # get min / max value
-    for attr in data['attributes']:
-        min(data['attributes'][attr]['value'])
-    """
-
     # save pose library
-    outFile = open(filePath, writeMode)
-    json.dump(data, outFile, sort_keys=True, indent=4)
-    print('Pose Capture Finish\n'),
+    with open(filePath, writeMode) as outFile:
+        json.dump(data, outFile, sort_keys=True, indent=4)
+        print('Pose Capture Finish\n'),
+        outFile.close()
 
     # backup pose library
-    outFile = open(filePath.replace('.json','_Backup.json'), writeMode)
-    json.dump(data, outFile, sort_keys=True, indent=4)
+    with open(filePath.replace('.json','_Backup.json'), writeMode) as outFile:
+        json.dump(data, outFile, sort_keys=True, indent=4)
+        outFile.close()
 
 def loadPoseLibrary(filePath,dstNs):
     poseLibJson = json.load(open(configJson['pose_library_path']))
@@ -200,3 +195,33 @@ def createPoseLibrary(filePath):
     cmds.setKeyframe(selectData['selection'], t=keyList)
 
     savePoseLibrary(filePath)
+
+def createMeshBlendshape(*_):
+    sel_list = [i for i in cmds.ls(sl=1) if cmds.listRelatives(i, s=1) != None]
+    sel_list = [i for i in sel_list if cmds.objectType(cmds.listRelatives(i, s=1)[0]) == 'mesh']
+
+    bs_list = [i for i in poseData.getPoseData() if i['type'] == 'blendshape' or i['type'] == 'expression']
+    print(poseData.getPoseData())
+    print(bs_list)
+
+    base_list = []
+    cmds.currentTime(1.0)
+    for obj in sel_list:
+        bs_ext = cmds.duplicate(obj, n=obj + '_extract')[0]
+        try:cmds.parent(obj,w=1)
+        except:pass
+        base_list += [bs_ext]
+
+    for obj in base_list:
+        obj_idx = base_list.index(obj)
+        bs = cmds.blendShape(n=obj + '_bs')[0]
+        for i in bs_list:
+            bs_idx = bs_list.index(i)
+            cmds.currentTime(float(i['id']))
+            if cmds.objExists(i['name']):
+                cmds.delete(i['name'])
+            temp_duplicate = cmds.duplicate(sel_list[obj_idx], n=i['name'])[0]
+            print(temp_duplicate)
+            cmds.blendShape(bs, e=True, target=(obj, bs_idx, temp_duplicate, 1.0))
+            cmds.delete(temp_duplicate)
+    cmds.currentTime(1.0)

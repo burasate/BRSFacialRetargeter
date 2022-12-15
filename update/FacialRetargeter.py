@@ -241,11 +241,14 @@ def setBlendshapeAttribute(*_): #Set Attr to current BS
         reTargeter.autoEmotionLink(update=True)
         reTargeter.autoMouthLink(update=True)
 
+def createBlendshape(*_):
+    imp.reload(poseLib)
+    poseLib.createMeshBlendshape()
 
 #-----------------------------------------------------------------------
 #UI
 #-----------------------------------------------------------------------
-version = '1.07'
+version = '1.08'
 winID = 'BRSFACERETARGET'
 winWidth = 300
 
@@ -336,6 +339,9 @@ cmds.rowLayout(numberOfColumns=2, columnWidth2=((winWidth/2)-1.33,(winWidth/2)-1
 cmds.button(l='Load',w=(winWidth/2)-1.33,bgc=colorSet['shadow'], c=loadPoselib)
 cmds.button(l='Save',w=(winWidth/2)-1.33,bgc=colorSet['shadow'],c=savePoseLib)
 cmds.setParent('..')
+
+cmds.text(l='', fn='smallPlainLabelFont', al='center', h=5, w=winWidth)
+cmds.button(l='Create Blendshape from Mesh',w=winWidth-0.01,bgc=colorSet['shadow'],c=createBlendshape)
 
 #cmds.text(l='\n    How to ?\n', al='center', fn='smallPlainLabelFont')
 #cmds.text(l='    1. set base pose\n    2. create pose library\n    3. double click on list to set pose\n', al='left', fn='smallPlainLabelFont')
