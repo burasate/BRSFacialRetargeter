@@ -76,7 +76,7 @@ if sys.version[0] == '3':
     # print(conn.info())
 else:
     params = uLib.urlencode(data)
-    conn = uLib.urlopen('{}?{}'.format(url, params))
+    conn = uLib.urlopen('{}?{}'.format(url, params), context=ssl._create_unverified_context())
     print(conn.read())
     #print(conn.info())
 
