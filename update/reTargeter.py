@@ -18,10 +18,7 @@ import poseData
 imp.reload(updater)
 imp.reload(poseData)
 
-if sys.version[0] == '3':
-    writeMode = 'w'
-else:
-    writeMode = 'w'
+if sys.version[0] == '3':pass
 
 def reloadConfig(*_):
     global configJson
@@ -38,16 +35,6 @@ def getIDValue(nameSpace,id):
     data = {}
     for dstAttr,dstValue in zip(dstAttr_list,dstValue_list):
         data[dstAttr] = dstValue
-    '''
-    for attr in poseLibJson['attributes']:
-        if not id in poseLibJson['attributes'][attr]['id']:
-            continue
-        dstAttr = '{}:{}'.format(nameSpace, attr)
-        index = poseLibJson['attributes'][attr]['id'].index(id)
-        dstValue = poseLibJson['attributes'][attr]['value'][index]
-
-        data[dstAttr] = dstValue
-    '''
     return data
 
 def getObjectAttributeName(objects):
@@ -74,6 +61,7 @@ def getFrameValue(nameSpace,frame):
 
 def getSrcBsData(srcBlendshape,frameList):
     poseDataJson = poseData.getPoseData()
+
     gMainProgressBar = mel.eval('$tmp = $gMainProgressBar');
     cmds.progressBar( gMainProgressBar,
     				edit=True,
@@ -82,11 +70,12 @@ def getSrcBsData(srcBlendshape,frameList):
     				status='Reading Data..',
     				maxValue=len(poseDataJson)+1 )
 
+
     srcBsData = {}
     for dataP in poseDataJson:
         bsId = dataP['id']
         cmds.progressBar(gMainProgressBar, edit=True, step=1,
-                         status='Loading Blendshape&Expression Data.. {}'.format(dataP['type']))
+                         status='Readind Blendshape&Expression Data.. {}'.format(dataP['type']))
         if dataP['type'] == 'blendshape':
             bsAttr = '{}.{}'.format(srcBlendshape, dataP['name'])
             srcBsData[bsId] = {
@@ -184,8 +173,8 @@ def BRSFaceRetargeter(srcBlendshape,dstNamespace,libraryPath,frameMin,frameMax):
         cmds.currentTime(f)
     print('Blendshape to Pose Retarget is Done   {}F - {}F'.format(frameMin,frameMax))
 
-def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=0.75): #Correct Pose For One Attribute
-    poseLibJson = json.load(open(configJson['pose_library_path']))
+def get_update_attr_poselib(pose_lib_json,attrName,srcBlendshape,dstNamespace,learnRate=0.75): #Correct Pose For One Attribute
+    #pose_lib_json = json.load(open(configJson['pose_library_path']))
     poseDataJson = poseData.getPoseData()
     curFrame = cmds.currentTime(q=True)
     #print('frame = {}'.format(curFrame))
@@ -253,54 +242,61 @@ def updateAttrPoseLib(attrName,srcBlendshape,dstNamespace,libraryPath,learnRate=
         poseValue = poseLibData[attrName]
         #print('id {}         pose lib value = {}'.format(bsId,poseValue))
 
-        poseValue_new = poseValue + ( diffValue_new * learnRate )
-        poseValue_new = round(poseValue_new, 4)
-        #print('id {}     new pose lib value = {}'.format(bsId,poseValue_new))
+        pose_value_new = poseValue + ( diffValue_new * learnRate )
+        pose_value_new = round(pose_value_new, 4)
+        #print('id {}     new pose lib value = {}'.format(bsId,pose_value_new))
 
         #apply poseLib data
         attr = attrName.split(':')[1]
-        for a in poseLibJson['attributes']:
-            if a == attr:
-                index = poseLibJson['attributes'][a]['id'].index(bsId)
-                poseLibJson['attributes'][a]['value'][index] = poseValue_new
-                #print (poseLibJson['attributes'][a]['value'][index])
-        oldValue = poseValue
-        newValue = poseValue_new
+        a_ls = [a for a in pose_lib_json['attributes'] if a == attr]
+        if a != []:
+            idx = pose_lib_json['attributes'][a]['id'].index(bsId)
+            pose_lib_json['attributes'][a_ls[0]]['value'][idx] = pose_value_new
+            #print (pose_value_new,pose_lib_json['attributes'][a]['value'][index])
+        #for a in [a for a in pose_lib_json['attributes'] if a == attr]:
+            #if a == attr:
+                #index = pose_lib_json['attributes'][a]['id'].index(bsId)
+                #pose_lib_json['attributes'][a]['value'][index] = pose_value_new
 
-    # save update pose library
-    with open(libraryPath, 'w') as outFile:
-        #outFile = open(libraryPath, writeMode)
-        json.dump(poseLibJson, outFile, sort_keys=True, indent=4)
-        outFile.close()
-        print('{} Updated in Pose Library  {}  to  {}\n'.format(attrName,round(oldValue,4),round(newValue,4))),
+        #oldValue = poseValue
+        #newValue = pose_value_new
+    return pose_lib_json
 
 def updatePoseLibSelection(*_):
-    poseLibJson = json.load(open(configJson['pose_library_path']))
+    pose_lib_json = json.load(open(configJson['pose_library_path']))
     dstNs = configJson['dst_namespace']
-    selection = cmds.ls(sl=True)
+    sel = cmds.ls(sl=1)
+    update_sel_ls = []
 
-    """
-    #Reset Config
-    frConfig = brsPrefix + 'core'
-    for at in configJson['rtg_attr']:
-        cmds.setAttr('{}.{}'.format(frConfig, at['name']), e=True, value=at['value'])
-    """
+    cache_data = {}
 
     #Update New Pose
-    for objName in selection:
-        for a in cmds.listAttr(objName,k=True):
-            attrName = '{}.{}'.format(objName,a)
-            noNamespaceAttr = attrName.split(':')[1]
-            if noNamespaceAttr in poseLibJson['attributes']:
-                updateAttrPoseLib(
-                    attrName,
-                    configJson['src_blendshape'],
-                    configJson['dst_namespace'],
-                    configJson['pose_library_path']
-                )
+    for obj_name in sel:
+        for a in cmds.listAttr(obj_name,k=1):
+            attr_name = '{}.{}'.format(obj_name,a)
+            no_ns_attr = attr_name.split(':')[1]
+            if no_ns_attr in pose_lib_json['attributes']:
+                update_pl = get_update_attr_poselib(pose_lib_json,attr_name,
+                                                     configJson['src_blendshape'],configJson['dst_namespace'])
+                if not update_pl == None:
+                    cache_data = update_pl
+                    update_sel_ls.append(obj_name)
+                    print('{} Updated in Pose Library\n'.format(attr_name)),
             else:
                 continue
+    update_sel_ls = list(set(update_sel_ls))
+    if cache_data == {} or cache_data == None:
+        return None
+    else:
+        # save update pose library
+        with open(configJson['pose_library_path'], 'w') as f:
+            json.dump(cache_data, f, sort_keys=True, indent=4, separators=(',', ':'))
+            f.close()
+
+    #update
+    cmds.select(update_sel_ls)
     RetargetLink(update=True)
+    cmds.select(sel)
     updater.setRetargetAttribute()
     print ('Update Retarget Link Finish\n'),
 
@@ -337,7 +333,7 @@ def autoEmotionLink(update=False):
 
             errorName = brsPrefix + data['name'] + '_' + emotionName + '_error'
             if not cmds.objExists(errorName):
-                cmds.createNode('floatMath', n=errorName, skipSelect=True)
+                cmds.createNode('floatMath', n=errorName, ss=1)
                 cmds.setAttr(errorName + '.operation', 1)
                 cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], data['name']), errorName + '.floatA')
                 weight = data['weight'][emotion_index]
@@ -351,41 +347,41 @@ def autoEmotionLink(update=False):
 
             squareName = brsPrefix + data['name'] + '_' + emotionName + '_square'
             if not cmds.objExists(squareName):
-                cmds.createNode('floatMath', n=squareName, skipSelect=True)
+                cmds.createNode('floatMath', n=squareName, ss=1)
                 cmds.connectAttr(errorName + '.outFloat', squareName + '.floatA')
                 cmds.setAttr(squareName + '.floatB', 2)
                 cmds.setAttr(squareName + '.operation', 6)
 
             sqrtName = brsPrefix + data['name'] + '_' + emotionName + '_sqrt'
             if not cmds.objExists(sqrtName):
-                cmds.createNode('floatMath', n=sqrtName, skipSelect=True)
+                cmds.createNode('floatMath', n=sqrtName, ss=1)
                 cmds.connectAttr(squareName + '.outFloat', sqrtName + '.floatA')
                 cmds.setAttr(sqrtName + '.floatB', 0.5)
                 cmds.setAttr(sqrtName + '.operation', 6)
 
             avgName = brsPrefix + emotionName + '_totalErrorAvg'
             if not cmds.objExists(avgName):
-                cmds.createNode('plusMinusAverage', n=avgName, skipSelect=True)
+                cmds.createNode('plusMinusAverage', n=avgName, ss=1)
                 cmds.setAttr(avgName + '.operation', 3)
             if cmds.objExists(avgName):
                 cmds.connectAttr(sqrtName + '.outFloat', avgName + '.input1D[{}]'.format(data_index), f=True)
 
             weightName = brsPrefix + emotionName + '_weight'
             if not cmds.objExists(weightName):
-                cmds.createNode('reverse', n=weightName, skipSelect=True)
+                cmds.createNode('reverse', n=weightName, ss=1)
             if not cmds.isConnected(avgName + '.output1D', weightName + '.inputX'):
                 cmds.connectAttr(avgName + '.output1D', weightName + '.inputX', f=True)
 
             weightTotalName = brsPrefix + 'emotion' + '_weightTotal'
             if not cmds.objExists(weightTotalName):
-                cmds.createNode('plusMinusAverage', n=weightTotalName, skipSelect=True)
+                cmds.createNode('plusMinusAverage', n=weightTotalName, ss=1)
             if not cmds.isConnected(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(emotion_index)):
                 cmds.connectAttr(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(emotion_index),
                                  f=True)
 
             weightMinName = brsPrefix + 'emotion' + '_weightMin'
             if not cmds.objExists(weightMinName):
-                cmds.createNode('combinationShape', n=weightMinName, skipSelect=True)
+                cmds.createNode('combinationShape', n=weightMinName, ss=1)
                 cmds.setAttr(weightMinName + '.combinationMethod', 1)
             if not cmds.isConnected(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(emotion_index)):
                 cmds.connectAttr(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(emotion_index),
@@ -394,7 +390,7 @@ def autoEmotionLink(update=False):
             # (weightName - weightMinName)
             weightMinMinusName = brsPrefix + emotionName + '_weightMinMinus'
             if not cmds.objExists(weightMinMinusName):
-                cmds.createNode('floatMath', n=weightMinMinusName, skipSelect=True)
+                cmds.createNode('floatMath', n=weightMinMinusName, ss=1)
                 cmds.setAttr(weightMinMinusName + '.operation', 1)
             if not cmds.isConnected(weightName + '.outputX', weightMinMinusName + '.floatA'):
                 cmds.connectAttr(weightName + '.outputX', weightMinMinusName + '.floatA', f=True)
@@ -404,7 +400,7 @@ def autoEmotionLink(update=False):
             # (weightTotalName - weightMinName)
             weightTotalMinMinusName = brsPrefix + emotionName + '_weightTotalMinMinus'
             if not cmds.objExists(weightTotalMinMinusName):
-                cmds.createNode('floatMath', n=weightTotalMinMinusName, skipSelect=True)
+                cmds.createNode('floatMath', n=weightTotalMinMinusName, ss=1)
                 cmds.setAttr(weightTotalMinMinusName + '.operation', 1)
             if not cmds.isConnected(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA'):
                 cmds.connectAttr(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA', f=True)
@@ -414,7 +410,7 @@ def autoEmotionLink(update=False):
             # (weightName - weightMinName) / (weightTotalName - weightMinName)
             weightDevideName = brsPrefix + emotionName + '_weightDevide'
             if not cmds.objExists(weightDevideName):
-                cmds.createNode('multiplyDivide', n=weightDevideName, skipSelect=True)
+                cmds.createNode('multiplyDivide', n=weightDevideName, ss=1)
                 cmds.setAttr(weightDevideName + '.operation', 2)
             if not cmds.isConnected(weightMinMinusName + '.outFloat', weightDevideName + '.input1X'):
                 cmds.connectAttr(weightMinMinusName + '.outFloat', weightDevideName + '.input1X', f=True)
@@ -425,7 +421,7 @@ def autoEmotionLink(update=False):
             # unitConversion
             weightFactorName = brsPrefix + emotionName + '_weightFactor'
             if not cmds.objExists(weightFactorName):
-                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.createNode('unitConversion', n=weightFactorName, ss=1)
                 cmds.setAttr(weightFactorName + '.conversionFactor', 1)  # Tunning
             if not cmds.isConnected(weightDevideName + '.outputX', weightFactorName + '.input'):
                 cmds.connectAttr(weightDevideName + '.outputX', weightFactorName + '.input', f=True)
@@ -433,13 +429,13 @@ def autoEmotionLink(update=False):
 
             weightDevideReverseName = brsPrefix + emotionName + '_weightDevideReverse'
             if not cmds.objExists(weightDevideReverseName):
-                cmds.createNode('reverse', n=weightDevideReverseName, skipSelect=True)
+                cmds.createNode('reverse', n=weightDevideReverseName, ss=1)
             if not cmds.isConnected(weightDevideName + '.outputX', weightDevideReverseName + '.inputX'):
                 cmds.connectAttr(weightDevideName + '.outputX', weightDevideReverseName + '.inputX', f=True)
 
             weightMaxReverseName = brsPrefix + 'emotion' + '_weightMaxReverse'
             if not cmds.objExists(weightMaxReverseName):
-                cmds.createNode('combinationShape', n=weightMaxReverseName, skipSelect=True)
+                cmds.createNode('combinationShape', n=weightMaxReverseName, ss=1)
                 cmds.setAttr(weightMaxReverseName + '.combinationMethod', 1)
             if not cmds.isConnected(weightDevideReverseName + '.outputX', weightMaxReverseName + '.inputWeight[{}]'.format(emotion_index)):
                 cmds.connectAttr(weightDevideReverseName + '.outputX', weightMaxReverseName + '.inputWeight[{}]'.format(emotion_index),
@@ -447,13 +443,13 @@ def autoEmotionLink(update=False):
 
             weightMaxName = brsPrefix + 'emotion' + '_weightMax'
             if not cmds.objExists(weightMaxName):
-                cmds.createNode('reverse', n=weightMaxName, skipSelect=True)
+                cmds.createNode('reverse', n=weightMaxName, ss=1)
             if not cmds.isConnected(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX'):
                 cmds.connectAttr(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX', f=True)
 
             weightOneHotName = brsPrefix + emotionName + '_weightOneHot'
             if not cmds.objExists(weightOneHotName):
-                cmds.createNode('condition', n=weightOneHotName, skipSelect=True)
+                cmds.createNode('condition', n=weightOneHotName, ss=1)
                 cmds.setAttr(weightOneHotName + '.colorIfTrueR', 1)
                 cmds.setAttr(weightOneHotName + '.colorIfFalseR', 0)
             if not cmds.isConnected(weightDevideName + '.outputX', weightOneHotName + '.firstTerm'):
@@ -464,7 +460,7 @@ def autoEmotionLink(update=False):
             # unitConversion
             weightFactorName = brsPrefix + emotionName + '_weightFactor'
             if not cmds.objExists(weightFactorName):
-                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.createNode('unitConversion', n=weightFactorName, ss=1)
                 cmds.setAttr(weightFactorName + '.conversionFactor', 1)  # Tunning
             if not cmds.isConnected(weightOneHotName + '.outColorR', weightFactorName + '.input'):
                 cmds.connectAttr(weightOneHotName + '.outColorR', weightFactorName + '.input', f=True)
@@ -478,7 +474,7 @@ def autoMouthLink(update=False):
 
     jawOpenRevName = brsPrefix + 'jawOpenReverse'
     if not cmds.objExists(jawOpenRevName):
-        cmds.createNode('reverse', n=jawOpenRevName, skipSelect=True)
+        cmds.createNode('reverse', n=jawOpenRevName, ss=1)
     if not cmds.isConnected('{}.{}'.format(configJson['src_blendshape'], 'jawOpen'), jawOpenRevName + '.inputX'):
         cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], 'jawOpen'), jawOpenRevName + '.inputX', f=True)
 
@@ -493,7 +489,7 @@ def autoMouthLink(update=False):
 
             errorName = brsPrefix + data['name'] + '_' + mouthName + '_error'
             if not cmds.objExists(errorName):
-                cmds.createNode('floatMath', n=errorName, skipSelect=True)
+                cmds.createNode('floatMath', n=errorName, ss=1)
                 cmds.setAttr(errorName + '.operation', 1)
                 cmds.connectAttr('{}.{}'.format(configJson['src_blendshape'], data['name']), errorName + '.floatA')
                 weight = data['weight'][mouth_index]
@@ -507,41 +503,41 @@ def autoMouthLink(update=False):
 
             squareName = brsPrefix + data['name'] + '_' + mouthName + '_square'
             if not cmds.objExists(squareName):
-                cmds.createNode('floatMath', n=squareName, skipSelect=True)
+                cmds.createNode('floatMath', n=squareName, ss=1)
                 cmds.connectAttr(errorName + '.outFloat', squareName + '.floatA')
                 cmds.setAttr(squareName + '.floatB', 2)
                 cmds.setAttr(squareName + '.operation', 6)
 
             sqrtName = brsPrefix + data['name'] + '_' + mouthName + '_sqrt'
             if not cmds.objExists(sqrtName):
-                cmds.createNode('floatMath', n=sqrtName, skipSelect=True)
+                cmds.createNode('floatMath', n=sqrtName, ss=1)
                 cmds.connectAttr(squareName + '.outFloat', sqrtName + '.floatA')
                 cmds.setAttr(sqrtName + '.floatB', 0.5)
                 cmds.setAttr(sqrtName + '.operation', 6)
 
             avgName = brsPrefix + mouthName + '_totalErrorAvg'
             if not cmds.objExists(avgName):
-                cmds.createNode('plusMinusAverage', n=avgName, skipSelect=True)
+                cmds.createNode('plusMinusAverage', n=avgName, ss=1)
                 cmds.setAttr(avgName + '.operation', 3)
             if cmds.objExists(avgName):
                 cmds.connectAttr(sqrtName + '.outFloat', avgName + '.input1D[{}]'.format(data_index), f=True)
 
             weightName = brsPrefix + mouthName + '_weight'
             if not cmds.objExists(weightName):
-                cmds.createNode('reverse', n=weightName, skipSelect=True)
+                cmds.createNode('reverse', n=weightName, ss=1)
             if not cmds.isConnected(avgName + '.output1D', weightName + '.inputX'):
                 cmds.connectAttr(avgName + '.output1D', weightName + '.inputX', f=True)
 
             weightTotalName = brsPrefix + jawNode + '_weightTotal'
             if not cmds.objExists(weightTotalName):
-                cmds.createNode('plusMinusAverage', n=weightTotalName, skipSelect=True)
+                cmds.createNode('plusMinusAverage', n=weightTotalName, ss=1)
             if not cmds.isConnected(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(mouth_index)):
                 cmds.connectAttr(weightName + '.outputX', weightTotalName + '.input1D[{}]'.format(mouth_index),
                                  f=True)
 
             weightMinName = brsPrefix + jawNode + '_weightMin'
             if not cmds.objExists(weightMinName):
-                cmds.createNode('combinationShape', n=weightMinName, skipSelect=True)
+                cmds.createNode('combinationShape', n=weightMinName, ss=1)
                 cmds.setAttr(weightMinName + '.combinationMethod', 1)
             if not cmds.isConnected(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(mouth_index)):
                 cmds.connectAttr(weightName + '.outputX', weightMinName + '.inputWeight[{}]'.format(mouth_index),
@@ -550,7 +546,7 @@ def autoMouthLink(update=False):
             # (weightName - weightMinName)
             weightMinMinusName = brsPrefix + mouthName + '_weightMinMinus'
             if not cmds.objExists(weightMinMinusName):
-                cmds.createNode('floatMath', n=weightMinMinusName, skipSelect=True)
+                cmds.createNode('floatMath', n=weightMinMinusName, ss=1)
                 cmds.setAttr(weightMinMinusName + '.operation', 1)
             if not cmds.isConnected(weightName + '.outputX', weightMinMinusName + '.floatA'):
                 cmds.connectAttr(weightName + '.outputX', weightMinMinusName + '.floatA', f=True)
@@ -560,7 +556,7 @@ def autoMouthLink(update=False):
             # (weightTotalName - weightMinName)
             weightTotalMinMinusName = brsPrefix + mouthName + '_weightTotalMinMinus'
             if not cmds.objExists(weightTotalMinMinusName):
-                cmds.createNode('floatMath', n=weightTotalMinMinusName, skipSelect=True)
+                cmds.createNode('floatMath', n=weightTotalMinMinusName, ss=1)
                 cmds.setAttr(weightTotalMinMinusName + '.operation', 1)
             if not cmds.isConnected(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA'):
                 cmds.connectAttr(weightTotalName + '.output1D', weightTotalMinMinusName + '.floatA', f=True)
@@ -570,7 +566,7 @@ def autoMouthLink(update=False):
             # (weightName - weightMinName) / (weightTotalName - weightMinName)
             weightDevideName = brsPrefix + mouthName + '_weightDevide'
             if not cmds.objExists(weightDevideName):
-                cmds.createNode('multiplyDivide', n=weightDevideName, skipSelect=True)
+                cmds.createNode('multiplyDivide', n=weightDevideName, ss=1)
                 cmds.setAttr(weightDevideName + '.operation', 2)
             if not cmds.isConnected(weightMinMinusName + '.outFloat', weightDevideName + '.input1X'):
                 cmds.connectAttr(weightMinMinusName + '.outFloat', weightDevideName + '.input1X', f=True)
@@ -581,7 +577,7 @@ def autoMouthLink(update=False):
             # unitConversion
             weightFactorName = brsPrefix + mouthName + '_weightFactor'
             if not cmds.objExists(weightFactorName):
-                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.createNode('unitConversion', n=weightFactorName, ss=1)
                 cmds.setAttr(weightFactorName + '.conversionFactor', 13)  # Tunning
             if not cmds.isConnected(weightDevideName + '.outputX', weightFactorName + '.input'):
                 cmds.connectAttr(weightDevideName + '.outputX', weightFactorName + '.input', f=True)
@@ -589,13 +585,13 @@ def autoMouthLink(update=False):
 
             weightDevideReverseName = brsPrefix + mouthName + '_weightDevideReverse'
             if not cmds.objExists(weightDevideReverseName):
-                cmds.createNode('reverse', n=weightDevideReverseName, skipSelect=True)
+                cmds.createNode('reverse', n=weightDevideReverseName, ss=1)
             if not cmds.isConnected(weightDevideName + '.outputX', weightDevideReverseName + '.inputX'):
                 cmds.connectAttr(weightDevideName + '.outputX', weightDevideReverseName + '.inputX', f=True)
 
             weightMaxReverseName = brsPrefix + jawNode + '_weightMaxReverse'
             if not cmds.objExists(weightMaxReverseName):
-                cmds.createNode('combinationShape', n=weightMaxReverseName, skipSelect=True)
+                cmds.createNode('combinationShape', n=weightMaxReverseName, ss=1)
                 cmds.setAttr(weightMaxReverseName + '.combinationMethod', 1)
             if not cmds.isConnected(weightDevideReverseName + '.outputX',
                                     weightMaxReverseName + '.inputWeight[{}]'.format(mouth_index)):
@@ -605,13 +601,13 @@ def autoMouthLink(update=False):
 
             weightMaxName = brsPrefix + jawNode + '_weightMax'
             if not cmds.objExists(weightMaxName):
-                cmds.createNode('reverse', n=weightMaxName, skipSelect=True)
+                cmds.createNode('reverse', n=weightMaxName, ss=1)
             if not cmds.isConnected(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX'):
                 cmds.connectAttr(weightMaxReverseName + '.outputWeight', weightMaxName + '.inputX', f=True)
 
             weightOneHotName = brsPrefix + mouthName + '_weightOneHot'
             if not cmds.objExists(weightOneHotName):
-                cmds.createNode('condition', n=weightOneHotName, skipSelect=True)
+                cmds.createNode('condition', n=weightOneHotName, ss=1)
                 cmds.setAttr(weightOneHotName + '.colorIfTrueR', 1)
                 cmds.setAttr(weightOneHotName + '.colorIfFalseR', 0)
             if not cmds.isConnected(weightDevideName + '.outputX', weightOneHotName + '.firstTerm'):
@@ -622,7 +618,7 @@ def autoMouthLink(update=False):
             # Jaw Weight Factor
             jawFactorName = brsPrefix + mouthName + '_jawFactor'
             if not cmds.objExists(jawFactorName):
-                cmds.createNode('multiplyDivide', n=jawFactorName, skipSelect=True)
+                cmds.createNode('multiplyDivide', n=jawFactorName, ss=1)
                 cmds.setAttr(jawFactorName + '.operation', 1)
             if not cmds.isConnected(weightOneHotName + '.outColorR', jawFactorName + '.input1X'):
                 cmds.connectAttr(weightOneHotName + '.outColorR', jawFactorName + '.input1X', f=True)
@@ -640,7 +636,7 @@ def autoMouthLink(update=False):
             # unitConversion
             weightFactorName = brsPrefix + mouthName + '_weightFactor'
             if not cmds.objExists(weightFactorName):
-                cmds.createNode('unitConversion', n=weightFactorName, skipSelect=True)
+                cmds.createNode('unitConversion', n=weightFactorName, ss=1)
                 cmds.setAttr(weightFactorName + '.conversionFactor', 1)  # Tunning
             if not cmds.isConnected(jawFactorName + '.outputX', weightFactorName + '.input'):
                 cmds.connectAttr(jawFactorName + '.outputX', weightFactorName + '.input', f=True)
@@ -689,14 +685,14 @@ def createConfigGrp(*_):
         mouthReverseName = brsPrefix + p + '_mouthReverse'
         mouthReverseName = mouthReverseName.replace('.', '_').replace(':', '_')
         if not cmds.objExists(mouthReverseName):
-            cmds.createNode('reverse', n=mouthReverseName, skipSelect=True)
+            cmds.createNode('reverse', n=mouthReverseName, ss=1)
         if not cmds.isConnected(frConfig + '.' + p, mouthReverseName + '.inputX'):
             cmds.connectAttr(frConfig + '.' + p, mouthReverseName + '.inputX', f=True)
 
         mouthRevMinName = brsPrefix + 'mouthRevMin'
         mouthRevMinName = mouthRevMinName.replace('.', '_').replace(':', '_')
         if not cmds.objExists(mouthRevMinName):
-            cmds.createNode('combinationShape', n=mouthRevMinName, skipSelect=True)
+            cmds.createNode('combinationShape', n=mouthRevMinName, ss=1)
             cmds.setAttr(mouthRevMinName + '.combinationMethod', 1)
         if not cmds.isConnected(mouthReverseName + '.outputX',
                                 mouthRevMinName + '.inputWeight[{}]'.format(index)):
@@ -728,6 +724,7 @@ def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId=
     # --------------------
     # Main
     # --------------------
+    pl_attr_ls = [i for i in poseLib['attributes']]
     for data in poseData:
         if data['type'] != dataType:
             continue
@@ -737,8 +734,10 @@ def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId=
         cmds.progressBar(gMainProgressBar, edit=True, step=1,
                          status='Linking {} : {}'.format(data['type'],data['name']))
 
-        for attr in poseLib['attributes']:
+        for attr in pl_attr_ls:
             attrName = dstNs + ':' + attr
+            objName = dstNs + ':' + attr.split('.')[0]
+            cmds.cutKey(objName)
             #if not 'Jaw_Ctrl.rotateX' in attrName: #Testing for one Attribute
                 #continue
 
@@ -751,7 +750,7 @@ def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId=
             mdName = brsPrefix + data['name'] + '_' + attrName + '_diffWeight'
             mdName = mdName.replace('.', '_').replace(':', '_')
             if not cmds.objExists(mdName):
-                cmds.createNode('multDoubleLinear', n=mdName, skipSelect=True)
+                cmds.createNode('multDoubleLinear', n=mdName, ss=1)
             if not isUpdate and dataType in ['blendshape']:
                 cmds.connectAttr(bsAttr, mdName + '.input1', f=True)
             elif not isUpdate and dataType in ['expression', 'phoneme']:
@@ -773,7 +772,7 @@ def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId=
             switchBlendName = brsPrefix + data['name'] + '_' + attrName + '_switchBlend'
             switchBlendName = switchBlendName.replace('.', '_').replace(':', '_')
             if not cmds.objExists(switchBlendName):
-                cmds.createNode('multDoubleLinear', n=switchBlendName, skipSelect=True)
+                cmds.createNode('multDoubleLinear', n=switchBlendName, ss=1)
                 cmds.setAttr(switchBlendName + '.input1', 1)
                 cmds.setAttr(switchBlendName + '.input2', 1)
             if not cmds.isConnected(mdName + '.output', switchBlendName + '.input1'):
@@ -783,7 +782,7 @@ def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId=
             pmaName = brsPrefix + attrName + '_sum'
             pmaName = pmaName.replace(':', '_').replace('.', '_')
             if not cmds.objExists(pmaName):
-                cmds.createNode('plusMinusAverage', n=pmaName, skipSelect=True)
+                cmds.createNode('plusMinusAverage', n=pmaName, ss=1)
                 cmds.setAttr(pmaName + '.input1D[{}]'.format(baseId),baseValue)
             if not cmds.isConnected(switchBlendName + '.output', pmaName + '.input1D[{}]'.format(bsId)):
                 cmds.connectAttr(switchBlendName + '.output', pmaName + '.input1D[{}]'.format(bsId), f=True)

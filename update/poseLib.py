@@ -15,10 +15,7 @@ import imp
 import poseData
 imp.reload(poseData)
 
-if sys.version[0] == '3':
-    writeMode = 'w'
-else:
-    writeMode = 'wb'
+if sys.version[0] == '3':pass
 
 def getSelection(*_):
     selection = cmds.ls(sl=True)
@@ -154,15 +151,15 @@ def savePoseLibrary(filePath):
     print ('after cleanup attr', len(data['attributes']))
 
     # save pose library
-    with open(filePath, writeMode) as outFile:
-        json.dump(data, outFile, sort_keys=True, indent=4)
+    with open(filePath, 'w') as f:
+        json.dump(data, f, sort_keys=True, indent=4)
         print('Pose Capture Finish\n'),
-        outFile.close()
+        f.close()
 
     # backup pose library
-    with open(filePath.replace('.json','_Backup.json'), writeMode) as outFile:
-        json.dump(data, outFile, sort_keys=True, indent=4)
-        outFile.close()
+    with open(filePath.replace('.json','_Backup.json'), 'w') as f:
+        json.dump(data, f, sort_keys=True, indent=4)
+        f.close()
 
 def loadPoseLibrary(filePath,dstNs):
     poseLibJson = json.load(open(configJson['pose_library_path']))
@@ -172,15 +169,21 @@ def loadPoseLibrary(filePath,dstNs):
     ctrl_list = [i for i in list(set(ctrl_list)) if cmds.objExists(i)]
     cmds.cutKey(ctrl_list)
 
-    for attr in poseLibJson['attributes']:
+    for attr in poseLibJson['pose_attribute']:
         attrName = '{}:{}'.format(dstNs,attr)
         if not cmds.objExists(attrName):
             cmds.warning('not found {}'.format(attrName))
             continue
+        #cmds.cutKey(attrName)
+        if not attr in list(poseLibJson['attributes']):
+            pose_value = poseLibJson['pose_attribute'][attr]
+            cmds.setAttr(attrName, pose_value)
+            continue
         for f in poseLibJson['attributes'][attr]['id']:
             index = poseLibJson['attributes'][attr]['id'].index(f)
             value = poseLibJson['attributes'][attr]['value'][index]
-            cmds.setKeyframe(attrName, t=f, v=value)
+            cmds.setKeyframe(attrName.split('.')[0], t=f, itt='auto', ott='step')
+            cmds.setKeyframe(attrName, t=f, v=value, itt='auto', ott='step')
     cmds.select(ctrl_list)
     print(', '.join(ctrl_list)+'\n'),
 
@@ -192,7 +195,7 @@ def createPoseLibrary(filePath):
     keyList = []
     for data in poseDataJson:
         keyList.append(data['id'])
-    cmds.setKeyframe(selectData['selection'], t=keyList)
+    cmds.setKeyframe(selectData['selection'], t=keyList, itt='auto', ott='step')
 
     savePoseLibrary(filePath)
 
@@ -201,8 +204,6 @@ def createMeshBlendshape(*_):
     sel_list = [i for i in sel_list if cmds.objectType(cmds.listRelatives(i, s=1)[0]) == 'mesh']
 
     bs_list = [i for i in poseData.getPoseData() if i['type'] == 'blendshape' or i['type'] == 'expression']
-    print(poseData.getPoseData())
-    print(bs_list)
 
     base_list = []
     cmds.currentTime(1.0)
