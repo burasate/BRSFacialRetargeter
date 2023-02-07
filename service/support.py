@@ -5,7 +5,7 @@ SUPPORTING SCRIPT
 ---------------------
 """
 
-import json, getpass, os, time,os,sys
+import json, getpass, os, time,os,sys, ssl
 from time import gmtime, strftime
 import datetime as dt
 from maya import mel
