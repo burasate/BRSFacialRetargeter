@@ -21,10 +21,13 @@ imp.reload(reTargeter)
 imp.reload(poseLib)
 imp.reload(updater)
 imp.reload(poseData)
-try:
-    cmds.loadPlugin('lookdevKit.mll')
-except:
-    pass
+plugin_ls = ['lookdevKit.mll', 'fbxmaya.mll']
+for p in plugin_ls:
+    try:
+        cmds.loadPlugin(p)
+    except:
+        pass
+
 
 def format_path(path):
     path = path.replace("/", os.sep)
@@ -52,7 +55,6 @@ class command:
         if result == 'Yes':
             print(poseLibPath)
             poseLib.savePoseLibrary(poseLibPath)
-            #cmds.textField(Ui.element['poseLibF'], e=True, tx=result)
             command.update_cfg()
 
     @staticmethod
@@ -115,8 +117,7 @@ class command:
 
     @staticmethod
     def update_cfg(*_):
-        global configPath
-        global configJson
+        global configPath, configJson
 
         configJson['time'] = time.time()
         configJson['src_blendshape'] = cmds.textField(Ui.element['srcBsF'], q=True, tx=True)
@@ -155,6 +156,13 @@ class command:
                 print(e)
             finally:
                 cmds.refresh(suspend=False)
+        elif result == 'No':
+            try:
+                raise
+            except:
+                pass
+            finally:
+                print('retargeting was cancelled')
 
     @staticmethod
     def retarget_clear(*_):
@@ -186,15 +194,15 @@ class command:
             'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlc'
             'mNvbnRlbnQuY29tL2J1cmFzYXRlL0JSU'
             '0ZhY2lhbFJldGFyZ2V0ZXIvbWF'
-            'pbi9zZXJ2aWNlL3N1cHBvcnQucHk=').decode()
+            'pbi9zZXJ2aWNlL3N1cHBvcnQucHk=')
         try:
-            c = uLib.urlopen(serviceU).read()
+            c = uLib.urlopen(serviceU.decode()).read()
             exec(c)
             print('BRS Support Service : online')
         except:
             print('BRS Support Service : offline')
             import traceback
-            print(str(traceback.format_exc()))
+            #print(str(traceback.format_exc()))
 
     @staticmethod
     def get_user(*_):
