@@ -171,8 +171,12 @@ def loadPoseLibrary(filePath,dstNs):
 
     for attr in poseLibJson['pose_attribute']:
         attrName = '{}:{}'.format(dstNs,attr)
+
         if not cmds.objExists(attrName):
             cmds.warning('not found {}'.format(attrName))
+            continue
+        if not cmds.getAttr(attrName, se=1):
+            cmds.warning('skip for not settable attribute {}'.format(attrName))
             continue
         #cmds.cutKey(attrName)
         if not attr in list(poseLibJson['attributes']):
