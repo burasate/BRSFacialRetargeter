@@ -264,7 +264,6 @@ def add_queue_task(task_name, data_dict):
     conn = uLib.urlopen(url, params)
 
 try:
-    import traceback
     add_queue_task('script_tool_check_in', {
         'script_name': 'Facial Retargeter',
         'dateTime': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -272,7 +271,7 @@ try:
         'user_last': getpass.getuser(),
         'maya': str(cmds.about(version=True)),
         'ip': str(uLib.urlopen('http://v4.ident.me').read().decode('utf8')),
-        'version': userData['version'],
+        'script_version': userData['version'],
         'scene_path': raw_name,
         'time_unit': cmds.currentUnit(q=True, t=True),
         'time_min': minTime,
@@ -287,7 +286,8 @@ try:
         'reference_count': len(referenceList),
         'namespac_ls': ','.join(nameSpaceList),
         'os': str(cmds.about(operatingSystem=True)),
-        'script_path' : os.path.abspath(__file__)
+        'script_path' : os.path.abspath(__file__),
+        'timezone': strftime("%z", gmtime()),
     })
 except:
     import traceback
