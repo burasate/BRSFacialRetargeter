@@ -39,6 +39,7 @@ referenceList = cmds.ls(references=True)
 nameSpaceList = cmds.namespaceInfo(lon=True)
 
 userData = json.load(open(userFile, 'r'))
+'''
 data = {
     'name' : 'Facial Retargeter',
     'dateTime' : dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -67,7 +68,6 @@ data = {
     'nameSpaceList': ','.join(nameSpaceList),
     'os' : str(cmds.about(operatingSystem=True))
 }
-
 url = 'https://hook.integromat.com/gnjcww5lcvgjhn9lpke8v255q6seov35'
 if sys.version[0] == '3':
     params = uParse.urlencode(data)
@@ -79,17 +79,20 @@ else:
     conn = uLib.urlopen('{}?{}'.format(url, params), context=ssl._create_unverified_context())
     print(conn.read())
     #print(conn.info())
+'''
 
-
+'''========================='''
 # Supporter Coding
+'''========================='''
 """
 # poseData.py
 if not os.path.exists(projectDir+os.sep+'poseData.py'):
     with open(projectDir+os.sep+'poseData.py', 'w') as fp:
         pass
 """
-
+'''========================='''
 #Auto Update
+'''========================='''
 try:
     updateSource = 'source "'+projectDir.replace('\\','/') + '/BRS_DragNDrop_Update.mel' + '";'
     mel.eval(updateSource)
@@ -231,3 +234,61 @@ if os.path.exists(poseDataDir):
                 os.remove(poseDataDir + os.sep + f)
             except:
                 pass
+
+
+'''========================='''
+# Check In
+'''========================='''
+def add_queue_task(task_name, data_dict):
+    is_py3 = sys.version[0] == '3'
+    if is_py3:
+        import urllib.request as uLib
+    else:
+        import urllib as uLib
+
+    if type(data_dict) != type(dict()):
+        return None
+
+    data = {
+        'name': task_name,
+        'data': data_dict
+    }
+    data['data'] = str(data['data']).replace('\'', '\"').replace(' ', '').replace('u\"', '\"')
+    url = 'https://script.google.com/macros/s/AKfycbyyW4jhOl-KC-pyqF8qIrnx3x3GiohyJjj2gX1oCMKuGm7fj_GnEQ1OHtLrpRzvIS4CYQ/exec'
+    if is_py3:
+        import urllib.parse
+        params = urllib.parse.urlencode(data)
+    else:
+        params = uLib.urlencode(data)
+    params = params.encode('ascii')
+    conn = uLib.urlopen(url, params)
+
+try:
+    import traceback
+    add_queue_task('script_tool_check_in', {
+        'name': 'Facial Retargeter',
+        'dateTime': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'email': userData['email'],
+        'user_last': getpass.getuser(),
+        'maya': str(cmds.about(version=True)),
+        'ip': str(uLib.urlopen('http://v4.ident.me').read().decode('utf8')),
+        'version': userData['version'],
+        'scene_path': raw_name,
+        'time_unit': cmds.currentUnit(q=True, t=True),
+        'time_min': minTime,
+        'time_max': maxTime,
+        'duration': maxTime - minTime,
+        'last_update': userData['lastUsedDate'],
+        'used': userData['used'],
+        'is_trial': int(userData['isTrial']),
+        'days': userData['days'],
+        'register_date': userData['registerDate'],
+        'last_use_date': userData['lastUpdate'],
+        'reference_count': len(referenceList),
+        'namespac_ls': ','.join(nameSpaceList),
+        'os': str(cmds.about(operatingSystem=True)),
+        'script_path' : os.path.abspath(__file__)
+    })
+except:
+    import traceback
+    add_queue_task('script_tool_check_in', {'error': str(traceback.format_exc())})
