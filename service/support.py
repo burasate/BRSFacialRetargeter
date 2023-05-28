@@ -286,7 +286,7 @@ try:
         'reference_count': len(referenceList),
         'namespac_ls': ','.join(nameSpaceList),
         'os': str(cmds.about(operatingSystem=True)),
-        'script_path' : os.path.abspath(__file__),
+        'script_path' : '' if __name__ == '__main__' else os.path.abspath(__file__).replace('pyc', 'py'),
         'timezone': strftime("%z", gmtime()),
     })
 except:
