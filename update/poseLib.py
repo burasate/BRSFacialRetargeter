@@ -167,9 +167,9 @@ def loadPoseLibrary(filePath,dstNs):
     ctrl_list = [i.split('.')[0] for i in poseLibJson['attributes']]
     ctrl_list = ['{}:{}'.format(dstNs,i) for i in ctrl_list]
     ctrl_list = [i for i in list(set(ctrl_list)) if cmds.objExists(i)]
-    cmds.cutKey(ctrl_list)
+    cmds.cutKey(cmds.ls(ctrl_list))
 
-    for attr in poseLibJson['pose_attribute']:
+    for attr in list(poseLibJson['pose_attribute']):
         attrName = '{}:{}'.format(dstNs,attr)
 
         if not cmds.objExists(attrName):
@@ -178,16 +178,25 @@ def loadPoseLibrary(filePath,dstNs):
         if not cmds.getAttr(attrName, se=1):
             cmds.warning('skip for not settable attribute {}'.format(attrName))
             continue
-        #cmds.cutKey(attrName)
-        if not attr in list(poseLibJson['attributes']):
-            pose_value = poseLibJson['pose_attribute'][attr]
-            cmds.setAttr(attrName, pose_value)
-            continue
-        for f in poseLibJson['attributes'][attr]['id']:
-            index = poseLibJson['attributes'][attr]['id'].index(f)
-            value = poseLibJson['attributes'][attr]['value'][index]
-            cmds.setKeyframe(attrName.split('.')[0], t=f, itt='auto', ott='step')
-            cmds.setKeyframe(attrName, t=f, v=value, itt='auto', ott='step')
+
+        # set default
+        pose_value = poseLibJson['pose_attribute'][attr]
+        cmds.setAttr(attrName, pose_value)
+
+        if not attr in list(poseLibJson['attributes']):continue
+
+        #print(attr, list(poseLibJson['attributes'][attr]['id']))
+        print(attr, list(poseLibJson['attributes'][attr]['value']))
+
+        # set keyframe
+        id_ls = list(poseLibJson['attributes'][attr]['id'])
+        for idx in range(len(id_ls)):
+            frame = float(id_ls[idx])
+        #for f in list(poseLibJson['attributes'][attr]['id']):
+            #idx = poseLibJson['attributes'][attr]['id'].index(f)
+            value = poseLibJson['attributes'][attr]['value'][idx]
+            cmds.setKeyframe(attrName, t=(frame,), v=value, itt='auto', ott='step')
+            #print([attrName, (frame,), value])
     cmds.select(ctrl_list)
     print(', '.join(ctrl_list)+'\n'),
 
