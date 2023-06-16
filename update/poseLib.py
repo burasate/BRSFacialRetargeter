@@ -169,34 +169,65 @@ def loadPoseLibrary(filePath,dstNs):
     ctrl_list = [i for i in list(set(ctrl_list)) if cmds.objExists(i)]
     cmds.cutKey(cmds.ls(ctrl_list))
 
-    for attr in list(poseLibJson['pose_attribute']):
-        attrName = '{}:{}'.format(dstNs,attr)
+    static_attr_ls = [i for i in list(poseLibJson['pose_attribute']) if not i  in list(poseLibJson['attributes'])]
+    print('static_attr_ls', sorted(static_attr_ls))
+    blendposes_attr_ls = [i for i in list(poseLibJson['pose_attribute']) if i in list(poseLibJson['attributes'])]
+    print('blendposes_attr_ls', sorted(blendposes_attr_ls))
 
-        if not cmds.objExists(attrName):
-            cmds.warning('not found {}'.format(attrName))
+    id_ls = list(poseLibJson['attributes'][blendposes_attr_ls[0]]['id'])
+
+    # set blendposes value
+    for attr in blendposes_attr_ls:
+        attr_name = '{}:{}'.format(dstNs, attr)
+        if not cmds.objExists(attr_name): continue
+        if not cmds.getAttr(attr_name, se=1): continue
+        for idx in range(len(id_ls)):
+            frame = float(id_ls[idx])
+            value = poseLibJson['attributes'][attr]['value'][idx]
+            cmds.setKeyframe(attr_name, t=(frame,), v=value, itt='auto', ott='auto')
+            # print([attr_name, (frame,), value])
+
+    # set static value
+    for attr in static_attr_ls:
+        attr_name = '{}:{}'.format(dstNs, attr)
+        if not cmds.objExists(attr_name): continue
+        if not cmds.getAttr(attr_name, se=1):continue
+        pose_value = poseLibJson['pose_attribute'][attr]
+        cmds.setAttr(attr_name, pose_value)
+        for idx in range(len(id_ls)):
+            frame = float(id_ls[idx])
+            cmds.setKeyframe(attr_name, t=(frame,), v=pose_value, itt='auto', ott='auto')
+
+    '''
+    for attr in list(poseLibJson['pose_attribute']):
+        attr_name = '{}:{}'.format(dstNs,attr)
+
+        if not cmds.objExists(attr_name):
+            cmds.warning('not found {}'.format(attr_name))
             continue
-        if not cmds.getAttr(attrName, se=1):
-            cmds.warning('skip for not settable attribute {}'.format(attrName))
+        if not cmds.getAttr(attr_name, se=1):
+            cmds.warning('skip for not settable attribute {}'.format(attr_name))
             continue
 
         # set default
         pose_value = poseLibJson['pose_attribute'][attr]
-        cmds.setAttr(attrName, pose_value)
+        cmds.setAttr(attr_name, pose_value)
 
         if not attr in list(poseLibJson['attributes']):continue
 
         #print(attr, list(poseLibJson['attributes'][attr]['id']))
         print(attr, list(poseLibJson['attributes'][attr]['value']))
 
-        # set keyframe
-        id_ls = list(poseLibJson['attributes'][attr]['id'])
+        # set keyframe blendposes
         for idx in range(len(id_ls)):
             frame = float(id_ls[idx])
-        #for f in list(poseLibJson['attributes'][attr]['id']):
-            #idx = poseLibJson['attributes'][attr]['id'].index(f)
             value = poseLibJson['attributes'][attr]['value'][idx]
-            cmds.setKeyframe(attrName, t=(frame,), v=value, itt='auto', ott='step')
-            #print([attrName, (frame,), value])
+            cmds.setKeyframe(attr_name, t=(frame,), v=value, itt='auto', ott='step')
+            #print([attr_name, (frame,), value])
+
+        # set keyframe static
+    '''
+
     cmds.select(ctrl_list)
     print(', '.join(ctrl_list)+'\n'),
 

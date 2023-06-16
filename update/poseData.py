@@ -622,12 +622,12 @@ def isUnderscoreBSAlias(bsName=configJson['src_blendshape']):
     except:
         return False
 
-def getPoseData(*_):
+def getPoseData(force_underscore = False):
     underscore = isUnderscoreBSAlias()
     rec = []
     for data in poseData:
         skipReplace = ['jawLeft','jawRight','mouthLeft','mouthRight']
-        if data['type'] == 'blendshape' and underscore and not data['name'] in skipReplace:
+        if data['type'] == 'blendshape' and (underscore or force_underscore) and not data['name'] in skipReplace:
             data['name'] =  data['name'].replace('Right','_R')
             data['name'] =  data['name'].replace('Left','_L')
         rec.append(data)
