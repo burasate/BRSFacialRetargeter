@@ -62,12 +62,6 @@ def savePoseLibrary(filePath):
         # print ('Record Frame to ID {}'.format(frame))
 
         for attr in selectData['attributes']:
-            # add atribute name in data
-            if not attr in data['attributes']:
-                data['attributes'][attr] = {}
-                data['attributes'][attr]['id'] = []
-                data['attributes'][attr]['value'] = []
-
             # get attribute value
             fullAttrName = '{}:{}'.format(selectData['namespace'], attr)
             is_setable = cmds.getAttr(fullAttrName, se=1)
@@ -78,6 +72,12 @@ def savePoseLibrary(filePath):
                 value = value[0]
             if type(value) == type(bool()):
                 value = int(value)
+
+            # add atribute name in data
+            if not attr in data['attributes']:
+                data['attributes'][attr] = {}
+                data['attributes'][attr]['id'] = []
+                data['attributes'][attr]['value'] = []
 
             # add id and value in data
             data['attributes'][attr]['id'].append(str(frame))
@@ -95,6 +95,7 @@ def savePoseLibrary(filePath):
         effectiveList = []
         valueDict = {}
         for i in range(len(idList)):
+            #print(attr, data['attributes'][attr])
             s = setsList[i]
             if not s in valueDict:
                 valueDict[s] = []
