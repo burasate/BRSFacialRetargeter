@@ -70,8 +70,9 @@ def savePoseLibrary(filePath):
 
             # get attribute value
             fullAttrName = '{}:{}'.format(selectData['namespace'], attr)
-            if not cmds.objExists(fullAttrName):
-                continue
+            is_setable = cmds.getAttr(fullAttrName, se=1)
+            if not cmds.objExists(fullAttrName): continue
+            if not is_setable: continue
             value = cmds.getAttr(fullAttrName, time=frame)
             if type(value) == type(list()):
                 value = value[0]
@@ -137,7 +138,6 @@ def savePoseLibrary(filePath):
                 data['attributes'][attr]['value'][i] = new_v
                 #print('{} {} {} seed = {} , new value = {}'.format(attr, idList[i], setsList[i], shareRate_rand, new_v))
 
-
     # delete useless attribute
     delAttrList = []
     print ('before cleanup attr', len(data['attributes']))
@@ -197,36 +197,6 @@ def loadPoseLibrary(filePath,dstNs):
         for idx in range(len(id_ls)):
             frame = float(id_ls[idx])
             cmds.setKeyframe(attr_name, t=(frame,), v=pose_value, itt='auto', ott='auto')
-
-    '''
-    for attr in list(poseLibJson['pose_attribute']):
-        attr_name = '{}:{}'.format(dstNs,attr)
-
-        if not cmds.objExists(attr_name):
-            cmds.warning('not found {}'.format(attr_name))
-            continue
-        if not cmds.getAttr(attr_name, se=1):
-            cmds.warning('skip for not settable attribute {}'.format(attr_name))
-            continue
-
-        # set default
-        pose_value = poseLibJson['pose_attribute'][attr]
-        cmds.setAttr(attr_name, pose_value)
-
-        if not attr in list(poseLibJson['attributes']):continue
-
-        #print(attr, list(poseLibJson['attributes'][attr]['id']))
-        print(attr, list(poseLibJson['attributes'][attr]['value']))
-
-        # set keyframe blendposes
-        for idx in range(len(id_ls)):
-            frame = float(id_ls[idx])
-            value = poseLibJson['attributes'][attr]['value'][idx]
-            cmds.setKeyframe(attr_name, t=(frame,), v=value, itt='auto', ott='step')
-            #print([attr_name, (frame,), value])
-
-        # set keyframe static
-    '''
 
     cmds.select(ctrl_list)
     print(', '.join(ctrl_list)+'\n'),
