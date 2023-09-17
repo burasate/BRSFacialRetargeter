@@ -241,3 +241,4 @@ def createMeshBlendshape(*_):
             cmds.blendShape(bs, e=True, target=(obj, bs_idx, temp_duplicate, 1.0))
             cmds.delete(temp_duplicate)
     cmds.currentTime(1.0)
+    cmds.parent(base_list, world=1)
