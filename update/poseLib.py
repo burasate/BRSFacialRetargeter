@@ -229,7 +229,8 @@ def createMeshBlendshape(*_):
         base_list += [bs_ext]
 
     for obj in base_list:
-        obj_idx = base_list.index(obj)
+        cmds.select(obj)
+        obj_idx = list(base_list).index(obj)
         bs = cmds.blendShape(n=obj + '_bs')[0]
         for i in bs_list:
             bs_idx = bs_list.index(i)
