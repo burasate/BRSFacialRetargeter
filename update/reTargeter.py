@@ -737,7 +737,8 @@ def poseDataLink(poseData, poseLib, srcBs, dstNs, dataType='blendshape', baseId=
         for attr in pl_attr_ls:
             attrName = dstNs + ':' + attr
             objName = dstNs + ':' + attr.split('.')[0]
-            cmds.cutKey(objName)
+            if cmds.objExists(objName):
+                cmds.cutKey(objName)
             #if not 'Jaw_Ctrl.rotateX' in attrName: #Testing for one Attribute
                 #continue
 

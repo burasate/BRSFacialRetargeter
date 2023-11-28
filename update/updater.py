@@ -133,13 +133,11 @@ def setRetargetAttribute(*_): #Main Update
         rsAttr = [attr for attr in list(poseLibJson['pose_attribute']) if attr not in attrList]
         for attr in rsAttr:
             attrName = dstNs + ':' + attr
-            if type(cmds.getAttr(attrName)) == list:
-                continue
-            if not cmds.getAttr(attrName, se=True):
-                continue
+            if not cmds.objExists(attrName) : continue
+            if type(cmds.getAttr(attrName)) == list: continue
+            if not cmds.getAttr(attrName, se=True): continue
             v = poseLibJson['pose_attribute'][attr]
-            if not cmds.objExists(attrName):
-                continue
+            if not cmds.objExists(attrName): continue
             if cmds.getAttr(attrName) != v:
                 cmds.setAttr(attrName, v, clamp=True)
                 cmds.cutKey(attrName)
