@@ -279,7 +279,7 @@ class command:
         poseLib.createMeshBlendshape()
 
 class Ui:
-    version = 1.12
+    version = 1.13
     win_id = 'FACERETARGET'
     dock_id = 'FACERETARGET_DOCK'
     win_width = 250
