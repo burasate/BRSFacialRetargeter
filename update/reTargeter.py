@@ -249,10 +249,10 @@ def get_update_attr_poselib(pose_lib_json,attrName,srcBlendshape,dstNamespace,le
         #apply poseLib data
         attr = attrName.split(':')[1]
         a_ls = [a for a in pose_lib_json['attributes'] if a == attr]
-        if a != []:
+        for a in a_ls:
             idx = pose_lib_json['attributes'][a]['id'].index(bsId)
             pose_lib_json['attributes'][a_ls[0]]['value'][idx] = pose_value_new
-            #print (pose_value_new,pose_lib_json['attributes'][a]['value'][index])
+            print (pose_value_new,pose_lib_json['attributes'][a]['value'][index])
         #for a in [a for a in pose_lib_json['attributes'] if a == attr]:
             #if a == attr:
                 #index = pose_lib_json['attributes'][a]['id'].index(bsId)
