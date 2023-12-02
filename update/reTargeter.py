@@ -274,6 +274,7 @@ def updatePoseLibSelection(*_):
     for obj_name in sel:
         for a in cmds.listAttr(obj_name,k=1):
             attr_name = '{}.{}'.format(obj_name,a)
+            if not ':' in attr_name: continue
             no_ns_attr = attr_name.split(':')[1]
             if no_ns_attr in pose_lib_json['attributes']:
                 update_pl = get_update_attr_poselib(pose_lib_json,attr_name,
