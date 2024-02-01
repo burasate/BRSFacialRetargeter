@@ -23,6 +23,8 @@ except:
     tool_dir = formatPath(os.path.abspath(scripts_dir + os.sep + 'BRSFacialRetargeter'))
 finally:
     user_file = formatPath(tool_dir + os.sep + 'user')
+    image_path = os.path.abspath(tool_dir + os.sep + 'BRSFacialRetargeter.png')
+print(user_file)
 
 # -------------
 # CREATE USER
@@ -71,6 +73,7 @@ finally:
     # Create Shelf
     topShelf = mel.eval('$nul = $gShelfTopLevel')
     currentShelf = cmds.tabLayout(topShelf, q=1, st=1)
+
     command = 'import imp\n' \
               'try:\n' \
               '    imp.reload(FacialRetargeter)\n' \
@@ -81,9 +84,7 @@ finally:
               'except:\n' \
               '    from BRSFacialRetargeter import FacialRetargeter\n' \
               '    FacialRetargeter.showUI()'
-
-    imagePath = projectDir + os.sep + 'BRSFacialRetargeter.png'
-    cmds.shelfButton(stp='python', iol='FR', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=imagePath, c=command)
+    cmds.shelfButton(stp='python', iol='FR', parent=currentShelf, ann='BRS FACIAL RETARGETER', i=image_path, c=command)
 
     # Finish
     cmds.confirmDialog(title='BRS FACIAL RETARGETER', message='Installation Successful.', button=['OK'])
