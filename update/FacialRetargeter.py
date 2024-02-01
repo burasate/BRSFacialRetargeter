@@ -33,10 +33,16 @@ def format_path(path):
     path = path.replace("/", os.sep)
     path = path.replace("\\", os.sep)
     return path
-mayaAppDir = format_path(mel.eval('getenv MAYA_APP_DIR'))
-scriptsDir = format_path(mayaAppDir + os.sep + 'scripts')
-projectDir = format_path(scriptsDir + os.sep + 'BRSFacialRetargeter')
-user_path = format_path(projectDir + os.sep + 'user')
+
+try:
+    tool_dir = os.path.dirname(os.path.abspath(__file__))
+except:
+    maya_app_dir = mel.eval('getenv MAYA_APP_DIR')
+    scripts_dir = os.path.abspath(maya_app_dir + os.sep + 'scripts')
+    tool_dir = os.path.abspath(scripts_dir + os.sep + 'BRSFacialRetargeter')
+finally:
+    user_path = tool_dir + os.sep + 'user'
+    
 
 if sys.version[0] == '3':
     import urllib.request as uLib
