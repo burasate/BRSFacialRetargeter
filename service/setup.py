@@ -11,16 +11,18 @@ def formatPath(path):
     path = path.replace("\\", os.sep)
     return path
 
+#mayaAppDir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
+#scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
+#projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
 
-mayaAppDir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
-scriptsDir = formatPath(mayaAppDir + os.sep + 'scripts')
-projectDir = formatPath(scriptsDir + os.sep + 'BRSFacialRetargeter')
-userFile = formatPath(projectDir + os.sep + 'user')
-
-# print ('mayaAppDir = ' + mayaAppDir)
-# print ('scriptsDir = ' + scriptsDir)
-# print ('projectDir = ' + projectDir)
-# print ('userSetupFile = ' + userFile)
+try:
+    tool_dir = os.path.dirname(os.path.abspath(__file__))
+except:
+    maya_app_dir = formatPath(mel.eval('getenv MAYA_APP_DIR'))
+    scripts_dir = formatPath(os.path.abspath(maya_app_dir + os.sep + 'scripts'))
+    tool_dir = formatPath(os.path.abspath(scripts_dir + os.sep + 'BRSFacialRetargeter'))
+finally:
+    user_file = formatPath(tool_dir + os.sep + 'user')
 
 # -------------
 # CREATE USER
@@ -29,7 +31,7 @@ today = str(dt.date.today())
 dataSet = {}
 
 try:
-    with open(userFile, 'r') as f:
+    with open(user_file, 'r') as f:
         dataSet = json.load(f)
 except:
     # Email Register
@@ -62,7 +64,7 @@ except:
     dataSet['user'] = getpass.getuser()
 
     # Create User
-    with open(userFile, 'w') as f:
+    with open(user_file, 'w') as f:
         json.dump(dataSet, f, indent=4)
 
 finally:
