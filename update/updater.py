@@ -14,6 +14,7 @@ frConfig = brsPrefix + 'core'
 #Init
 prevTime = time.time()
 
+# ----------------------------------------
 def lerp(a, b, factor):
     if factor > 1:
         factor = 1
@@ -21,6 +22,13 @@ def lerp(a, b, factor):
         factor = 0
     v = a + (b-a)*factor
     return v
+
+def quadratic_ease_in_out(a, b, t):
+    t = min(max(t, 0), 1)
+    t = t ** 1.8
+    return a + (b - a) * (1 - (1 - t) ** 2)
+
+# ----------------------------------------
 
 def getFPS(*_):
     timeUnitSet = {'game': 15, 'film': 24, 'pal': 25, 'ntsc': 30, 'show': 48, 'palf': 50, 'ntscf': 60}
@@ -47,8 +55,9 @@ def autoEmotion(*_):
         prevValue = cmds.getAttr('{}.{}'.format(frConfig, emotionName))
         newValue = cmds.getAttr(weightFactorName + '.output')
         if isAuto:
-            sm = 1 / (timming * fps)
-            v = lerp(prevValue, newValue, sm)
+            time_delta = 1 / float(fps)
+            sm = time_delta * timming
+            v = quadratic_ease_in_out(prevValue, newValue, sm)
             cmds.setAttr('{}.{}'.format(frConfig, emotionName), v, clamp=True)
             #cmds.connectAttr(weightFactorName + '.output', '{}.{}'.format(frConfig, emotionName), f=True)
         elif not isAuto:
@@ -69,8 +78,9 @@ def autoMouth(*_):
         prevValue = cmds.getAttr('{}.{}'.format(frConfig, mouthName))
         newValue = cmds.getAttr(weightFactorName + '.output')
         if isAuto:
-            sm = 1 / (timming*fps)
-            v = lerp(prevValue, newValue, sm)
+            time_delta = 1 / float(fps)
+            sm = time_delta * timming
+            v = quadratic_ease_in_out(prevValue, newValue, sm)
             cmds.setAttr('{}.{}'.format(frConfig, mouthName), v, clamp=True)
             #cmds.connectAttr(weightFactorName + '.output', '{}.{}'.format(frConfig, mouthName), f=True)
         elif not isAuto:
@@ -119,7 +129,7 @@ def setRetargetAttribute(*_): #Main Update
             if cmds.getAttr(attrName) != newValue and cmds.getAttr(attrName, settable=True):
                 if objName in smoothSetsList:
                     sm = 1 - cmds.getAttr('{}.{}'.format(frConfig, 'smoothness'))
-                    v = lerp(prevValue, newValue, sm)
+                    v = quadratic_ease_in_out(prevValue, newValue, sm)
                     cmds.setAttr(attrName, v, clamp=True)
                 else:
                     cmds.setAttr(attrName, newValue, clamp=True)
