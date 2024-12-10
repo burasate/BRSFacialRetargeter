@@ -78,7 +78,6 @@ def autoMouth(*_):
         newValue = cmds.getAttr(weightFactorName + '.output')
         if isAuto:
             sm = 1 / float(timming * fps)
-            sm = time_delta * timming
             v = quadratic_ease_in_out(prevValue, newValue, sm)
             cmds.setAttr('{}.{}'.format(frConfig, mouthName), v, clamp=True)
             #cmds.connectAttr(weightFactorName + '.output', '{}.{}'.format(frConfig, mouthName), f=True)
@@ -89,6 +88,7 @@ def autoMouth(*_):
 def setRetargetAttribute(*_): #Main Update
     # Before Update
     global prevTime
+    fps = getFPS()
     #FacialRetargeter.updater.setRetargetAttribute()
     poseLibJson = json.load(open(configJson['pose_library_path']))
     dstNs = configJson['dst_namespace']
@@ -127,7 +127,11 @@ def setRetargetAttribute(*_): #Main Update
             newValue = cmds.getAttr(pmaName + '.output1D')
             if cmds.getAttr(attrName) != newValue and cmds.getAttr(attrName, settable=True):
                 if objName in smoothSetsList:
-                    sm = 1 - cmds.getAttr('{}.{}'.format(frConfig, 'smoothness'))
+                    time_delta = 1/float(fps)
+                    smoothness = cmds.getAttr('{}.{}'.format(frConfig, 'smoothness'))
+                    sm = 1 - (time_delta * fps * smoothness)
+                    sm = max(0, min(1, sm))
+
                     v = quadratic_ease_in_out(prevValue, newValue, sm)
                     cmds.setAttr(attrName, v, clamp=True)
                 else:
