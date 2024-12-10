@@ -55,8 +55,7 @@ def autoEmotion(*_):
         prevValue = cmds.getAttr('{}.{}'.format(frConfig, emotionName))
         newValue = cmds.getAttr(weightFactorName + '.output')
         if isAuto:
-            time_delta = 1 / float(fps)
-            sm = time_delta * timming
+            sm = 1 / float(timming * fps)
             v = quadratic_ease_in_out(prevValue, newValue, sm)
             cmds.setAttr('{}.{}'.format(frConfig, emotionName), v, clamp=True)
             #cmds.connectAttr(weightFactorName + '.output', '{}.{}'.format(frConfig, emotionName), f=True)
@@ -78,7 +77,7 @@ def autoMouth(*_):
         prevValue = cmds.getAttr('{}.{}'.format(frConfig, mouthName))
         newValue = cmds.getAttr(weightFactorName + '.output')
         if isAuto:
-            time_delta = 1 / float(fps)
+            sm = 1 / float(timming * fps)
             sm = time_delta * timming
             v = quadratic_ease_in_out(prevValue, newValue, sm)
             cmds.setAttr('{}.{}'.format(frConfig, mouthName), v, clamp=True)
